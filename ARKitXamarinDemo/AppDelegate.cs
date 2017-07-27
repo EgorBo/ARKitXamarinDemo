@@ -82,11 +82,11 @@ namespace ARKitXamarinDemo
 
 	class UrhoARSessionDelegate : ARSessionDelegate
 	{
-		Game game;
+		ArkitApp game;
 
 		public UrhoARSessionDelegate() { }
 
-		public UrhoARSessionDelegate(Game game)
+		public UrhoARSessionDelegate(ArkitApp game)
 		{
 			this.game = game;
 		}
