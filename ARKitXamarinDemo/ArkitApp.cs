@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-
+using ARKit;
 using Foundation;
 using UIKit;
 using Urho;
@@ -130,8 +130,6 @@ namespace ARKitXamarinDemo
 					cmd->TextureName0 = ToUrhoString(nameof(cameraYtexture));
 					cmd->TextureName1 = ToUrhoString(nameof(cameraUVtexture));
 					Viewport.RenderPath = rp;
-					var ss = (float)Graphics.Width / (float)img.Width;
-					System.Console.WriteLine("!!!!!!! " + ss);
 					yuvTexturesInited = true;
 				}
 
