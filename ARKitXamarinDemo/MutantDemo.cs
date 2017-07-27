@@ -10,10 +10,10 @@ using Urho.Urho2D;
 
 namespace ARKitXamarinDemo
 {
-	public class Game : ArkitApp
+	public class MutantDemo : ArkitApp
 	{
 		[Preserve]
-		public Game(ApplicationOptions opts) : base(opts) { }
+		public MutantDemo(ApplicationOptions opts) : base(opts) { }
 
 		Node mutantNode;
 

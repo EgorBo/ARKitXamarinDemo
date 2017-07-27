@@ -26,6 +26,7 @@ namespace ARKitXamarinDemo
 		public Camera Camera { get; private set; }
 		public Node LightNode { get; private set; }
 		public Light Light { get; private set; }
+		public ARSession ARSession { get; private set; }
 
 		public void CreateArScene()
 		{
@@ -53,8 +54,13 @@ namespace ARKitXamarinDemo
 			Renderer.SetViewport(0, Viewport);
 		}
 
+		protected virtual void OnARSessionSet(ARSession session) { }
+
 		public unsafe void ProcessARFrame(ARSession session, ARFrame frame)
 		{
+			if (ARSession == null)
+				OnARSessionSet(ARSession = session);
+
 			var arcamera = frame?.Camera;
 			var transform = arcamera.Transform;
 			var projection = arcamera.ProjectionMatrix;

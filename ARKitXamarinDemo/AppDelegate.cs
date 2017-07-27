@@ -29,23 +29,21 @@ namespace ARKitXamarinDemo
 			return true;
 		}
 
-		ARSession arSession;
+		UrhoARSessionDelegate arSessionDelegate;
 
 		async void LaunchUrho()
 		{
 			await Task.Yield();
 
 			var authStatus = AVCaptureDevice.GetAuthorizationStatus(AVMediaType.Video);
-			System.Console.WriteLine("AVCaptureDevice auth status:" + authStatus);
+			Console.WriteLine("AVCaptureDevice auth status:" + authStatus);
 
-			var game = new Game(new ApplicationOptions("UrhoData") { Orientation = ApplicationOptions.OrientationType.Landscape });
+			var game = new MutantDemo(new ApplicationOptions("UrhoData") {
+				Orientation = ApplicationOptions.OrientationType.Landscape
+			});
 			game.Run();
-
-			arSession = new ARSession();
-			arSession.Delegate = new UrhoARSessionDelegate(game);
-			var config = new ARWorldTrackingSessionConfiguration();
-			//config.PlaneDetection = ARPlaneDetection.Horizontal;
-			arSession.Run(config);
+			arSessionDelegate = new UrhoARSessionDelegate(game);
+			arSessionDelegate.Run();
 		}
 
 		public override void OnResignActivation(UIApplication application)
@@ -83,12 +81,20 @@ namespace ARKitXamarinDemo
 	class UrhoARSessionDelegate : ARSessionDelegate
 	{
 		ArkitApp game;
-
-		public UrhoARSessionDelegate() { }
+		ARSession arSession;
 
 		public UrhoARSessionDelegate(ArkitApp game)
 		{
 			this.game = game;
+			this.arSession = new ARSession();
+			arSession.Delegate = this;
+		}
+
+		public void Run()
+		{
+			var config = new ARWorldTrackingSessionConfiguration();
+			//config.PlaneDetection = ARPlaneDetection.Horizontal;
+			arSession.Run(config);
 		}
 
 		public override void CameraDidChangeTrackingState(ARSession session, ARCamera camera)
