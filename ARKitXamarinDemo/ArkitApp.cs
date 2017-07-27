@@ -147,6 +147,10 @@ namespace ARKitXamarinDemo
 			{
 				var yPtr = img.BaseAddress;
 				var uvPtr = img.GetBaseAddress(1);
+
+				if (yPtr == IntPtr.Zero || uvPtr == IntPtr.Zero)
+					return;
+
 				cameraYtexture.SetData(0, 0, 0, (int)img.Width, (int)img.Height, (void*)yPtr);
 				cameraUVtexture.SetData(0, 0, 0, (int)img.GetWidthOfPlane(1), (int)img.GetHeightOfPlane(1), (void*)uvPtr);
 			}
