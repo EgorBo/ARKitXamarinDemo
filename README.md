@@ -1,6 +1,8 @@
 # ARKitXamarinDemo
 [ARKit](https://developer.apple.com/arkit/) + UrhoSharp + Xamarin
 
+![Screenshot](Screenshot.gif) 
+
 ## Prerequisites
  * iPhone 6S or later (
  * iOS 11 beta 3 or later
