@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Foundation;
 using UIKit;
 using Urho;
@@ -26,8 +25,6 @@ namespace ARKitXamarinDemo
 		bool debug = true;
 		bool surfaceIsValid;
 		bool positionIsSelected;
-		Node positionSelectorNode;
-		Box positionSelectorModel;
 
 		readonly Color validPositionColor = Color.Green;
 		readonly Color invalidPositionColor = Color.Red;
@@ -39,7 +36,10 @@ namespace ARKitXamarinDemo
 		protected override async void Start()
 		{
 			base.Start();
+			CreateArScene();
 			environmentNode = Scene.CreateChild();
+
+			Input.TouchEnd += e => OnGestureTapped();
 		}
 
 		void SubscribeToEvents()
@@ -54,6 +54,7 @@ namespace ARKitXamarinDemo
 
 			crowdManager.SubscribeToCrowdAgentReposition(args =>
 			{
+				System.Console.WriteLine("SubscribeToCrowdAgentReposition!");
 				Node node = args.Node;
 				Vector3 velocity = args.Velocity * -1;
 				AnimationController animCtrl = node.GetComponent<AnimationController>();
@@ -125,40 +126,15 @@ namespace ARKitXamarinDemo
 			agent.NavigationQuality = NavigationQuality.High;
 		}
 
-		protected override void OnUpdate(float timeStep)
-		{
-			if (positionIsSelected)
-				return;
-
-			Ray cameraRay = Camera.GetScreenRay(0.5f, 0.5f);
-			var result = Scene.GetComponent<Octree>().RaycastSingle(cameraRay, RayQueryLevel.Triangle, 100, DrawableFlags.Geometry, 0x70000000);
-			if (result != null)
-			{
-				var angle = Vector3.CalculateAngle(new Vector3(0, 1, 0), result.Value.Normal);
-				surfaceIsValid = angle < 0.3f; //allow only horizontal surfaces
-				positionSelectorNode.Position = result.Value.Position;
-				positionSelectorModel.Color = surfaceIsValid ? validPositionColor : invalidPositionColor;
-			}
-			else
-			{
-				// no spatial surfaces found
-				surfaceIsValid = false;
-				positionSelectorModel.Color = invalidPositionColor;
-			}
-		}
-
 		public void OnGestureTapped()
 		{
 			NavigationMesh navMesh;
 			Vector3 hitPos = new Vector3(0, -1, 2);
 
+			System.Console.WriteLine("Tapped!" + positionIsSelected);
 			if (!positionIsSelected)
 			{
 				positionIsSelected = true;
-				positionSelectorNode.Remove();
-				positionSelectorNode = null;
-				Scene.CreateComponent<SpatialCursor>();
-
 				navMesh = Scene.CreateComponent<NavigationMesh>();
 
 				//this plane is a workaround 
@@ -166,7 +142,7 @@ namespace ARKitXamarinDemo
 				var planeNode = Scene.CreateChild();
 				var plane = planeNode.CreateComponent<StaticModel>();
 				plane.Model = CoreAssets.Models.Plane;
-				plane.SetMaterial(spatialMaterial);
+				plane.SetMaterial(Material.FromColor(Color.Transparent));
 				planeNode.Scale = new Vector3(20, 1, 20);
 				planeNode.Position = hitPos;
 
@@ -202,9 +178,13 @@ namespace ARKitXamarinDemo
 
 			if (positionIsSelected)
 			{
-				Scene.GetComponent<SpatialCursor>().ClickAnimation();
+				//var newhitPos = Raycast();
+				//if (newhitPos == null)
+				//	return;
+				
+				//Scene.GetComponent<SpatialCursor>().ClickAnimation();
 				navMesh = Scene.GetComponent<NavigationMesh>();
-				Vector3 pathPos = navMesh.FindNearestPoint(hitPos, new Vector3(0.1f, 0.1f, 0.1f));
+				Vector3 pathPos = navMesh.FindNearestPoint(new Vector3(Randoms.Next(-2, 2), -1, 2), new Vector3(0.1f, 0.1f, 0.1f));
 				Scene.GetComponent<CrowdManager>().SetCrowdTarget(pathPos, Scene);
 			}
 		}
