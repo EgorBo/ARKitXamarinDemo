@@ -1,10 +1,11 @@
 # ARKitXamarinDemo
 ARKit + UrhoSharp + Xamarin
 
-Video:
+Video (click to play):
+
 [![Alt text](https://img.youtube.com/vi/urplsujopvY/0.jpg)](https://www.youtube.com/watch?v=urplsujopvY)
 
-Prerequisites
+## Prerequisites
 1. iPhone 6S or later
 2. iOS 11 beta 3 or later
 3. Xcode 9 beta 3 or later
