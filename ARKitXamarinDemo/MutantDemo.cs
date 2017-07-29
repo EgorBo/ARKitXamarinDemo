@@ -22,7 +22,7 @@ namespace ARKitXamarinDemo
 			UnhandledException += OnUnhandledException;
 			Log.LogLevel = LogLevel.Debug;
 
-			CreateArScene();
+			base.Start ();
 
 			// Mutant
 			mutantNode = Scene.CreateChild();
