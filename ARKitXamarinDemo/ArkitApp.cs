@@ -50,6 +50,7 @@ namespace ARKitXamarinDemo
 		public Camera Camera { get; private set; }
 		public Node LightNode { get; private set; }
 		public Light Light { get; private set; }
+		public MonoDebugHud DebugHud { get; private set; }
 		public ARSession ARSession { get; private set; }
 
 		void CreateArScene()
@@ -75,6 +76,10 @@ namespace ARKitXamarinDemo
 			// Viewport
 			Viewport = new Viewport(Context, Scene, Camera, null);
 			Renderer.SetViewport(0, Viewport);
+
+			DebugHud = new MonoDebugHud(this);
+			DebugHud.FpsOnly = true;
+			DebugHud.Show(Color.Black, 32);
 		}
 
 		protected override void Start ()
@@ -107,7 +112,7 @@ namespace ARKitXamarinDemo
 
 			// extract parameters from Projection Matrix
 			float near = projection.M43 / projection.M33;
-			float far = projection.M43 / (projection.M33 + 1);
+			float far = projection.M43 / (projection.M33 + 1.0f);
 			float aspect = projection.M22 / projection.M11;
 			float fovH = 360f * (float)Math.Atan(1f / projection.M11) / MathHelper.Pi;
 			float fovV = 360f * (float)Math.Atan(1f / projection.M22) / MathHelper.Pi;
@@ -170,6 +175,11 @@ namespace ARKitXamarinDemo
 					Viewport.RenderPath = rp;
 					yuvTexturesInited = true;
 				}
+
+				// display tracking state (quality)
+				DebugHud.AdditionalText = $"{arcamera.TrackingState}";
+				if (arcamera.TrackingStateReason != ARTrackingStateReason.None)
+					DebugHud.AdditionalText += arcamera.TrackingStateReason;
 
 				// see "Render with Realistic Lighting"
 				// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
@@ -243,6 +253,21 @@ namespace ARKitXamarinDemo
 		public override void SessionInterruptionEnded (ARSession session)
 		{
 			Console.WriteLine ("SessionInterruptionEnded");
+		}
+
+		public override void DidAddAnchors(ARSession session, ARAnchor[] anchors)
+		{
+			Console.WriteLine ("DidAddAnchors");
+		}
+
+		public override void DidRemoveAnchors(ARSession session, ARAnchor[] anchors)
+		{
+			Console.WriteLine ("DidRemoveAnchors");
+		}
+
+		public override void DidUpdateAnchors(ARSession session, ARAnchor[] anchors)
+		{
+			Console.WriteLine ("DidUpdateAnchors");
 		}
 	}
 }

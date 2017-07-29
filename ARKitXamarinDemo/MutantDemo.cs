@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
-using CoreVideo;
 using Urho;
 using Urho.Actions;
 using Urho.Gui;
@@ -26,7 +24,7 @@ namespace ARKitXamarinDemo
 
 			// Mutant
 			mutantNode = Scene.CreateChild();
-			mutantNode.Position = new Vector3(0, -1f, 2f);
+			mutantNode.Position = new Vector3(0, -1f, 1f);
 			mutantNode.SetScale(0.5f);
 			var mutant = mutantNode.CreateComponent<AnimatedModel>();
 			mutant.Model = ResourceCache.GetModel("Models/Mutant.mdl");
@@ -34,11 +32,14 @@ namespace ARKitXamarinDemo
 			var animation = mutantNode.CreateComponent<AnimationController>();
 			animation.Play("Animations/Mutant_HipHop1.ani", 0, true, 0.2f);
 
-			Input.TouchEnd += OnTouched;
+			Input.TouchMove += OnTouchMove;
 		}
 
-		void OnTouched(TouchEndEventArgs e)
+
+		void OnTouchMove(TouchMoveEventArgs e)
 		{
+			float speed = 0.001f;
+			mutantNode.Translate(new Vector3(0/*e.DX * speed*/, -e.DY * speed, 0));
 		}
 
 		void OnUnhandledException(object sender, Urho.UnhandledExceptionEventArgs e)
