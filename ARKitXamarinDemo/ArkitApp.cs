@@ -1,4 +1,8 @@
-﻿using System;
+﻿// 
+// ArkitApp: provides a Urho.Application subclass that blends Urho with
+// ARKit.   
+//
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -11,14 +15,39 @@ using Urho.Urho2D;
 
 namespace ARKitXamarinDemo
 {
+	/// <summary>
+	/// ARKitApp blends UrhoSharp with ARKit by providing an application that has been
+	/// configured with a basic scene, a camera, a light and can be fed frames from 
+	/// ARKit's ARSession.
+	/// </summary>
 	public class ArkitApp : Urho.Application
 	{
 		Texture2D cameraYtexture;
 		Texture2D cameraUVtexture;
 		bool yuvTexturesInited;
+		ARSessionDelegate arSessionDelegate;
 
 		[Preserve]
-		public ArkitApp(ApplicationOptions opts) : base(opts) { }
+		/// <summary>
+		/// Creates a new instance of ARKIt.   You can provide an custom ARSessionDelegate
+		/// that would implement your callbacks for ARSession.  
+		/// </summary>
+		/// <remarks>
+		/// If you do not provide a value,
+		/// a default implementation that calls the ProcessARFrame on each ARSessionDelegate.DidUpdateFrame
+		/// call is provided.
+		/// </remarks>
+		public ArkitApp(ApplicationOptions opts, ARSessionDelegate arSessionDelegate = null) : base(opts) 
+		{
+			if (arSessionDelegate == null) {
+				this.arSessionDelegate = new UrhoARSessionDelegate (this);
+				ARSession = new ARSession () { Delegate = arSessionDelegate };
+				var config = new ARWorldTrackingSessionConfiguration ();
+				//config.PlaneDetection = ARPlaneDetection.Horizontal;
+				ARSession.Run (config);
+			} else
+				this.arSessionDelegate = arSessionDelegate;
+		}
 
 		public Viewport Viewport { get; private set; }
 		public Scene Scene { get; private set; }
@@ -28,7 +57,7 @@ namespace ARKitXamarinDemo
 		public Light Light { get; private set; }
 		public ARSession ARSession { get; private set; }
 
-		public void CreateArScene()
+		void CreateArScene()
 		{
 			// 3D scene with Octree and Zone
 			Scene = new Scene(Context);
@@ -37,13 +66,13 @@ namespace ARKitXamarinDemo
 			zone.AmbientColor = new Color(0.1f, 0.1f, 0.1f);
 
 			// Light
-			var lightNode = Scene.CreateChild(name: "DirectionalLight");
-			lightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
-			var light = lightNode.CreateComponent<Light>();
-			light.LightType = LightType.Directional;
-			light.CastShadows = true;
-			light.ShadowIntensity = 0.5f;
-			light.ShadowCascade = new CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f);
+			LightNode = Scene.CreateChild(name: "DirectionalLight");
+			LightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
+			Light = LightNode.CreateComponent<Light>();
+			Light.LightType = LightType.Directional;
+			Light.CastShadows = true;
+			Light.ShadowIntensity = 0.5f;
+			Light.ShadowCascade = new CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f);
 
 			// Camera
 			CameraNode = Scene.CreateChild(name: "Camera");
@@ -52,6 +81,11 @@ namespace ARKitXamarinDemo
 			// Viewport
 			Viewport = new Viewport(Context, Scene, Camera, null);
 			Renderer.SetViewport(0, Viewport);
+		}
+
+		protected override void Start ()
+		{
+			CreateArScene ();
 		}
 
 		protected virtual void OnARSessionSet(ARSession session) { }
@@ -170,6 +204,42 @@ namespace ARKitXamarinDemo
 			us.Length = (uint)str.Length;
 			us.Capacity = (uint)us.Length + 1;
 			return us;
+		}
+	}
+
+	class UrhoARSessionDelegate : ARSessionDelegate
+	{
+		WeakReference<ArkitApp> arkitApp;
+
+		public UrhoARSessionDelegate (ArkitApp arkitApp)
+		{
+			this.arkitApp = new WeakReference<ArkitApp>(arkitApp);
+		}
+
+		public override void CameraDidChangeTrackingState (ARSession session, ARCamera camera)
+		{
+			Console.WriteLine ("CameraDidChangeTrackingState");
+		}
+
+		public override void DidUpdateFrame (ARSession session, ARFrame frame)
+		{
+			if (arkitApp.TryGetTarget (out var ap))
+				ap.ProcessARFrame (session, frame);
+		}
+
+		public override void DidFail (ARSession session, Foundation.NSError error)
+		{
+			Console.WriteLine ("DidFail");
+		}
+
+		public override void SessionWasInterrupted (ARSession session)
+		{
+			Console.WriteLine ("SessionWasInterrupted");
+		}
+
+		public override void SessionInterruptionEnded (ARSession session)
+		{
+			Console.WriteLine ("SessionInterruptionEnded");
 		}
 	}
 }
