@@ -39,18 +39,13 @@ namespace ARKitXamarinDemo
 		/// </remarks>
 		public ArkitApp(ApplicationOptions opts, ARSessionDelegate arSessionDelegate = null) : base(opts) 
 		{
-			if (arSessionDelegate == null) {
-				this.arSessionDelegate = new UrhoARSessionDelegate (this);
-				ARSession = new ARSession () { Delegate = arSessionDelegate };
-				var config = new ARWorldTrackingSessionConfiguration ();
-				//config.PlaneDetection = ARPlaneDetection.Horizontal;
-				ARSession.Run (config);
-			} else
-				this.arSessionDelegate = arSessionDelegate;
+			this.arSessionDelegate = arSessionDelegate;
 		}
 
 		public Viewport Viewport { get; private set; }
 		public Scene Scene { get; private set; }
+		public Zone Zone { get; private set; }
+		public Octree Octree { get; private set; }
 		public Node CameraNode { get; private set; }
 		public Camera Camera { get; private set; }
 		public Node LightNode { get; private set; }
@@ -61,9 +56,8 @@ namespace ARKitXamarinDemo
 		{
 			// 3D scene with Octree and Zone
 			Scene = new Scene(Context);
-			var octree = Scene.CreateComponent<Octree>();
-			var zone = Scene.CreateComponent<Zone>();
-			zone.AmbientColor = new Color(0.1f, 0.1f, 0.1f);
+			Octree = Scene.CreateComponent<Octree>();
+			Zone = Scene.CreateComponent<Zone>();
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
@@ -86,15 +80,19 @@ namespace ARKitXamarinDemo
 		protected override void Start ()
 		{
 			CreateArScene ();
-		}
 
-		protected virtual void OnARSessionSet(ARSession session) { }
+			if (arSessionDelegate == null) {
+				this.arSessionDelegate = new UrhoARSessionDelegate(this);
+			}
+
+			ARSession = new ARSession() { Delegate = arSessionDelegate };
+			var config = new ARWorldTrackingSessionConfiguration();
+			config.PlaneDetection = ARPlaneDetection.Horizontal;
+			ARSession.Run(config);
+		}
 
 		public unsafe void ProcessARFrame(ARSession session, ARFrame frame)
 		{
-			if (ARSession == null)
-				OnARSessionSet(ARSession = session);
-
 			var arcamera = frame?.Camera;
 			var transform = arcamera.Transform;
 			var projection = arcamera.ProjectionMatrix;
@@ -172,6 +170,11 @@ namespace ARKitXamarinDemo
 					Viewport.RenderPath = rp;
 					yuvTexturesInited = true;
 				}
+
+				// see "Render with Realistic Lighting"
+				// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
+				var ambientIntensity = (float) frame.LightEstimate.AmbientIntensity / 1000f;
+				Zone.AmbientColor = new Color(0.5f, 0.5f, 0.5f) * ambientIntensity;
 
 				//use outside of InvokeOnMain?
 				if (yuvTexturesInited)
