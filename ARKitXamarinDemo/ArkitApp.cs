@@ -37,13 +37,13 @@ namespace ARKitXamarinDemo
 			zone.AmbientColor = new Color(0.1f, 0.1f, 0.1f);
 
 			// Light
-			var lightNode = Scene.CreateChild(name: "DirectionalLight");
-			lightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
-			var light = lightNode.CreateComponent<Light>();
-			light.LightType = LightType.Directional;
-			light.CastShadows = true;
-			light.ShadowIntensity = 0.5f;
-			light.ShadowCascade = new CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f);
+			LightNode = Scene.CreateChild(name: "DirectionalLight");
+			LightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
+			Light = LightNode.CreateComponent<Light>();
+			Light.LightType = LightType.Directional;
+			Light.CastShadows = true;
+			Light.ShadowIntensity = 0.5f;
+			Light.ShadowCascade = new CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f);
 
 			// Camera
 			CameraNode = Scene.CreateChild(name: "Camera");
