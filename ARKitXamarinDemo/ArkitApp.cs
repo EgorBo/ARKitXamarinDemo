@@ -37,10 +37,7 @@ namespace ARKitXamarinDemo
 		/// a default implementation that calls the ProcessARFrame on each ARSessionDelegate.DidUpdateFrame
 		/// call is provided.
 		/// </remarks>
-		public ArkitApp(ApplicationOptions opts, ARSessionDelegate arSessionDelegate = null) : base(opts) 
-		{
-			this.arSessionDelegate = arSessionDelegate;
-		}
+		public ArkitApp(ApplicationOptions opts) : base(opts) { }
 
 		public Viewport Viewport { get; private set; }
 		public Scene Scene { get; private set; }
@@ -66,7 +63,7 @@ namespace ARKitXamarinDemo
 			Light = LightNode.CreateComponent<Light>();
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
-			Light.ShadowIntensity = 0.5f;
+			Light.ShadowIntensity = 0.75f;
 			Light.ShadowCascade = new CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f);
 
 			// Camera
@@ -86,12 +83,10 @@ namespace ARKitXamarinDemo
 		{
 			CreateArScene ();
 
-			if (arSessionDelegate == null) {
-				this.arSessionDelegate = new UrhoARSessionDelegate(this);
-			}
-
+			arSessionDelegate = new UrhoARSessionDelegate(this);
 			ARSession = new ARSession() { Delegate = arSessionDelegate };
 			var config = new ARWorldTrackingSessionConfiguration();
+			//disable PlaneDetection on devices with A8 (iPhone 6 for example)
 			config.PlaneDetection = ARPlaneDetection.Horizontal;
 			ARSession.Run(config);
 		}
@@ -119,79 +114,73 @@ namespace ARKitXamarinDemo
 			float projectOffsetX = -projection.M31 / 2f;
 			float projectOffsetY = -projection.M32 / 2f;
 
-			//Update data on Update
-			//TODO: move Engine.RenderFrame() to DidUpdateFrame callback
-			InvokeOnMain(() =>
+			// Set Camera parameters
+			// NOTE: Do I have to set it each frame?
+			Camera.Skew = projection.M21;
+			Camera.ProjectionOffset = new Vector2(projectOffsetX, projectOffsetY);
+			Camera.AspectRatio = aspect;
+			Camera.Fov = fovV;
+			Camera.NearClip = near;
+			Camera.FarClip = far;
+
+			// Rotation
+			CameraNode.Rotation = rotation;
+
+			// Position
+			var row = arcamera.Transform.Row3;
+			CameraNode.Position = new Vector3(row.X, row.Y, -row.Z);
+
+			if (!yuvTexturesInited)
 			{
-				// Set Camera parameters
-				// NOTE: Do I have to set it each frame?
-				Camera.Skew = projection.M21;
-				Camera.ProjectionOffset = new Vector2(projectOffsetX, projectOffsetY);
-				Camera.AspectRatio = aspect;
-				Camera.Fov = fovV;
-				Camera.NearClip = near;
-				Camera.FarClip = far;
+				var img = frame.CapturedImage;
 
-				// Rotation
-				CameraNode.Rotation = rotation;
+				// texture for Y-plane;
+				cameraYtexture = new Texture2D();
+				cameraYtexture.SetNumLevels(1);
+				cameraYtexture.FilterMode = TextureFilterMode.Bilinear;
+				cameraYtexture.SetAddressMode(TextureCoordinate.U, TextureAddressMode.Clamp);
+				cameraYtexture.SetAddressMode(TextureCoordinate.V, TextureAddressMode.Clamp);
+				cameraYtexture.SetSize((int)img.Width, (int)img.Height, Graphics.LuminanceFormat, TextureUsage.Dynamic);
+				//cameraYtexture.SetSize(Graphics.Width, Graphics.Height, Graphics.LuminanceFormat, TextureUsage.Dynamic);
+				cameraYtexture.Name = nameof(cameraYtexture);
+				ResourceCache.AddManualResource(cameraYtexture);
 
-				// Position
-				var row = arcamera.Transform.Row3;
-				CameraNode.Position = new Vector3(row.X, row.Y, -row.Z);
+				// texture for UV-plane;
+				cameraUVtexture = new Texture2D();
+				cameraUVtexture.SetNumLevels(1);
+				cameraUVtexture.SetSize((int)img.GetWidthOfPlane(1), (int)img.GetHeightOfPlane(1), Graphics.LuminanceAlphaFormat, TextureUsage.Dynamic);
+				cameraUVtexture.FilterMode = TextureFilterMode.Bilinear;
+				cameraUVtexture.SetAddressMode(TextureCoordinate.U, TextureAddressMode.Clamp);
+				cameraUVtexture.SetAddressMode(TextureCoordinate.V, TextureAddressMode.Clamp);
+				cameraUVtexture.Name = nameof(cameraUVtexture);
+				ResourceCache.AddManualResource(cameraUVtexture);
 
-				if (!yuvTexturesInited)
-				{
-					var img = frame.CapturedImage;
+				RenderPath rp = new RenderPath();
+				rp.Load(ResourceCache.GetXmlFile("ARRenderPath.xml"));
+				var cmd = rp.GetCommand(1); //see ARRenderPath.xml, second command.
+				cmd->SetTextureName(TextureUnit.Diffuse, cameraYtexture.Name); //sDiffMap
+				cmd->SetTextureName(TextureUnit.Normal, cameraUVtexture.Name); //sNormalMap
+				//cmd->SetShaderParameter("CameraScale", 0.9f);
 
-					// texture for Y-plane;
-					cameraYtexture = new Texture2D();
-					cameraYtexture.SetNumLevels(1);
-					cameraYtexture.FilterMode = TextureFilterMode.Bilinear;
-					cameraYtexture.SetAddressMode(TextureCoordinate.U, TextureAddressMode.Clamp);
-					cameraYtexture.SetAddressMode(TextureCoordinate.V, TextureAddressMode.Clamp);
-					cameraYtexture.SetSize((int)img.Width, (int)img.Height, Graphics.LuminanceFormat, TextureUsage.Dynamic);
-					//cameraYtexture.SetSize(Graphics.Width, Graphics.Height, Graphics.LuminanceFormat, TextureUsage.Dynamic);
-					cameraYtexture.Name = nameof(cameraYtexture);
-					ResourceCache.AddManualResource(cameraYtexture);
+				Viewport.RenderPath = rp;
+				yuvTexturesInited = true;
+			}
 
-					// texture for UV-plane;
-					cameraUVtexture = new Texture2D();
-					cameraUVtexture.SetNumLevels(1);
-					cameraUVtexture.SetSize((int)img.GetWidthOfPlane(1), (int)img.GetHeightOfPlane(1), Graphics.LuminanceAlphaFormat, TextureUsage.Dynamic);
-					cameraUVtexture.FilterMode = TextureFilterMode.Bilinear;
-					cameraUVtexture.SetAddressMode(TextureCoordinate.U, TextureAddressMode.Clamp);
-					cameraUVtexture.SetAddressMode(TextureCoordinate.V, TextureAddressMode.Clamp);
-					cameraUVtexture.Name = nameof(cameraUVtexture);
-					ResourceCache.AddManualResource(cameraUVtexture);
+			// display tracking state (quality)
+			DebugHud.AdditionalText = $"{arcamera.TrackingState}";
+			if (arcamera.TrackingStateReason != ARTrackingStateReason.None)
+				DebugHud.AdditionalText += arcamera.TrackingStateReason;
 
-					RenderPath rp = new RenderPath();
-					//rp.SetShaderParameter("CameraScale", (float)Graphics.Width / (int)img.Width); 
-					rp.Load(ResourceCache.GetXmlFile("ARRenderPath.xml"));
-					var cmd = rp.GetCommand(1); //see ARRenderPath.xml, second command.
-					//TextureName0 stands for sDiffMap, TextureName1 stands for sNormalMap
-					//TODO: surface RenderPathCommand::SetTexture(TextureAddress, string) method 
-					cmd->TextureName0 = ToUrhoString(nameof(cameraYtexture));
-					cmd->TextureName1 = ToUrhoString(nameof(cameraUVtexture));
-					Viewport.RenderPath = rp;
-					yuvTexturesInited = true;
-				}
+			// see "Render with Realistic Lighting"
+			// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
+			var ambientIntensity = (float) frame.LightEstimate.AmbientIntensity / 1000f;
+			Zone.AmbientColor = Color.White * ambientIntensity * 0.2f;
 
-				// display tracking state (quality)
-				DebugHud.AdditionalText = $"{arcamera.TrackingState}";
-				if (arcamera.TrackingStateReason != ARTrackingStateReason.None)
-					DebugHud.AdditionalText += arcamera.TrackingStateReason;
-
-				// see "Render with Realistic Lighting"
-				// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
-				var ambientIntensity = (float) frame.LightEstimate.AmbientIntensity / 1000f;
-				Zone.AmbientColor = new Color(0.5f, 0.5f, 0.5f) * ambientIntensity;
-
-				//use outside of InvokeOnMain?
-				if (yuvTexturesInited)
-					UpdateBackground(frame);
-				// required!
-				frame.Dispose();
-			});
+			//use outside of InvokeOnMain?
+			if (yuvTexturesInited)
+				UpdateBackground(frame);
+			// required!
+			frame.Dispose();
 		}
 
 		unsafe void UpdateBackground(ARFrame frame)
@@ -209,14 +198,16 @@ namespace ARKitXamarinDemo
 			}
 		}
 
-		//temp workaround, will be fixed in the next UrhoSharp update
-		static UrhoString ToUrhoString(string str)
+		protected Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f)
 		{
-			var us = new UrhoString();
-			us.Buffer = Marshal.StringToHGlobalAnsi(str);
-			us.Length = (uint)str.Length;
-			us.Capacity = (uint)us.Length + 1;
-			return us;
+			var result = ARSession.CurrentFrame.HitTest(new CoreGraphics.CGPoint(screenX, screenY),
+				ARHitTestResultType.ExistingPlaneUsingExtent)?.FirstOrDefault();
+			if (result != null)
+			{
+				var row = result.WorldTransform.Row3;
+				return new Vector3(row.X, row.Y, -row.Z);
+			}
+			return null;
 		}
 	}
 
@@ -237,7 +228,7 @@ namespace ARKitXamarinDemo
 		public override void DidUpdateFrame (ARSession session, ARFrame frame)
 		{
 			if (arkitApp.TryGetTarget (out var ap))
-				ap.ProcessARFrame (session, frame);
+				Urho.Application.InvokeOnMain(() => ap.ProcessARFrame (session, frame));
 		}
 
 		public override void DidFail (ARSession session, Foundation.NSError error)

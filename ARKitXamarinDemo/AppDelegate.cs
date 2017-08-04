@@ -29,12 +29,6 @@ namespace ARKitXamarinDemo
 		{
 			await Task.Yield();
 
-			if (!await AVCaptureDevice.RequestAccessForMediaTypeAsync (AVMediaType.Video))
-				return;
-			
-			var authStatus = AVCaptureDevice.GetAuthorizationStatus(AVMediaType.Video);
-			Console.WriteLine("AVCaptureDevice auth status:" + authStatus);
-
 			var mutantDemo = new MutantDemo(new ApplicationOptions("UrhoData") {
 				Orientation = ApplicationOptions.OrientationType.Landscape
 			});

@@ -88,7 +88,7 @@
     <Reference Include="System.Core" />
     <Reference Include="Xamarin.iOS" />
     <Reference Include="Urho">
-      <HintPath>..\packages\UrhoSharp.1.4.47\lib\Xamarin.iOS10\Urho.dll</HintPath>
+      <HintPath>..\packages\UrhoSharp.1.5.2\lib\Xamarin.iOS10\Urho.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +108,7 @@
   <ItemGroup>
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
+    <None Include="UrhoSharpReadme.txt" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
