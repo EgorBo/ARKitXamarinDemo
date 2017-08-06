@@ -4,6 +4,7 @@
 //
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -11,6 +12,7 @@ using ARKit;
 using Foundation;
 using UIKit;
 using Urho;
+using System.Runtime.CompilerServices;
 using Urho.Urho2D;
 
 namespace ARKitXamarinDemo
@@ -49,6 +51,7 @@ namespace ARKitXamarinDemo
 		public Light Light { get; private set; }
 		public MonoDebugHud DebugHud { get; private set; }
 		public ARSession ARSession { get; private set; }
+		public Node AnchorsNode { get; private set; }
 
 		void CreateArScene()
 		{
@@ -56,6 +59,7 @@ namespace ARKitXamarinDemo
 			Scene = new Scene(Context);
 			Octree = Scene.CreateComponent<Octree>();
 			Zone = Scene.CreateComponent<Zone>();
+			Zone.AmbientColor = Color.White * 0.1f;
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
@@ -63,8 +67,6 @@ namespace ARKitXamarinDemo
 			Light = LightNode.CreateComponent<Light>();
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
-			Light.ShadowIntensity = 0.75f;
-			Light.ShadowCascade = new CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f);
 
 			// Camera
 			CameraNode = Scene.CreateChild(name: "Camera");
@@ -72,11 +74,15 @@ namespace ARKitXamarinDemo
 
 			// Viewport
 			Viewport = new Viewport(Context, Scene, Camera, null);
+			Viewport.SetClearColor(Color.Transparent);
 			Renderer.SetViewport(0, Viewport);
+
 
 			DebugHud = new MonoDebugHud(this);
 			DebugHud.FpsOnly = true;
-			DebugHud.Show(Color.Black, 32);
+			DebugHud.Show(Color.Black, 45);
+
+			AnchorsNode = Scene.CreateChild();
 		}
 
 		protected override void Start ()
@@ -91,44 +97,35 @@ namespace ARKitXamarinDemo
 			ARSession.Run(config);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		unsafe protected void ApplyTransform(Node node, OpenTK.Matrix4 matrix)
+		{
+			Stopwatch sw = Stopwatch.StartNew();
+			Matrix4 urhoTransform = *(Matrix4*)(void*)&matrix;
+			var rotation = urhoTransform.Rotation;
+			rotation.Z *= -1;
+			node.Rotation = rotation;
+			var pos = matrix.Row3;
+			node.Position = new Vector3(pos.X, pos.Y, -pos.Z);
+			sw.Stop();
+			System.Console.WriteLine(sw.ElapsedMilliseconds.ToString());
+		}
+
 		public unsafe void ProcessARFrame(ARSession session, ARFrame frame)
 		{
 			var arcamera = frame?.Camera;
 			var transform = arcamera.Transform;
-			var projection = arcamera.ProjectionMatrix;
+			var prj = arcamera.ProjectionMatrix;
 
-			// calculate rotation
-			// we use ARCamera.EulerAngles (vec3) but also can use ARCamera.Transform (mat4)
-			var ea = arcamera.EulerAngles;
-			var rotation = new Quaternion(
-				MathHelper.RadiansToDegrees(-ea.X),
-				MathHelper.RadiansToDegrees(-ea.Y),
-				MathHelper.RadiansToDegrees(ea.Z));
-
-			// extract parameters from Projection Matrix
-			float near = projection.M43 / projection.M33;
-			float far = projection.M43 / (projection.M33 + 1.0f);
-			float aspect = projection.M22 / projection.M11;
-			float fovH = 360f * (float)Math.Atan(1f / projection.M11) / MathHelper.Pi;
-			float fovV = 360f * (float)Math.Atan(1f / projection.M22) / MathHelper.Pi;
-			float projectOffsetX = -projection.M31 / 2f;
-			float projectOffsetY = -projection.M32 / 2f;
-
-			// Set Camera parameters
-			// NOTE: Do I have to set it each frame?
-			Camera.Skew = projection.M21;
-			Camera.ProjectionOffset = new Vector2(projectOffsetX, projectOffsetY);
-			Camera.AspectRatio = aspect;
-			Camera.Fov = fovV;
-			Camera.NearClip = near;
-			Camera.FarClip = far;
-
-			// Rotation
-			CameraNode.Rotation = rotation;
-
-			// Position
-			var row = arcamera.Transform.Row3;
-			CameraNode.Position = new Vector3(row.X, row.Y, -row.Z);
+			//Urho accepts projection matrix in DirectX format (negative row3 + transpose)
+			var urhoProjection = new Matrix4(
+				 prj.M11,  prj.M21, -prj.M31,  prj.M41,
+				 prj.M12,  prj.M22, -prj.M32,  prj.M42,
+				 prj.M13,  prj.M23, -prj.M33,  prj.M43,
+				 prj.M14,  prj.M24, -prj.M34,  prj.M44);
+			
+			Camera.SetProjection(urhoProjection);
+			ApplyTransform(CameraNode, transform);
 
 			if (!yuvTexturesInited)
 			{
@@ -141,7 +138,6 @@ namespace ARKitXamarinDemo
 				cameraYtexture.SetAddressMode(TextureCoordinate.U, TextureAddressMode.Clamp);
 				cameraYtexture.SetAddressMode(TextureCoordinate.V, TextureAddressMode.Clamp);
 				cameraYtexture.SetSize((int)img.Width, (int)img.Height, Graphics.LuminanceFormat, TextureUsage.Dynamic);
-				//cameraYtexture.SetSize(Graphics.Width, Graphics.Height, Graphics.LuminanceFormat, TextureUsage.Dynamic);
 				cameraYtexture.Name = nameof(cameraYtexture);
 				ResourceCache.AddManualResource(cameraYtexture);
 
@@ -160,25 +156,28 @@ namespace ARKitXamarinDemo
 				var cmd = rp.GetCommand(1); //see ARRenderPath.xml, second command.
 				cmd->SetTextureName(TextureUnit.Diffuse, cameraYtexture.Name); //sDiffMap
 				cmd->SetTextureName(TextureUnit.Normal, cameraUVtexture.Name); //sNormalMap
-				//cmd->SetShaderParameter("CameraScale", 0.9f);
+				cmd->SetShaderParameter("CameraScale", 1f);
 
 				Viewport.RenderPath = rp;
 				yuvTexturesInited = true;
 			}
 
 			// display tracking state (quality)
-			DebugHud.AdditionalText = $"{arcamera.TrackingState}";
+			DebugHud.AdditionalText = $"{arcamera.TrackingState}\n";
 			if (arcamera.TrackingStateReason != ARTrackingStateReason.None)
 				DebugHud.AdditionalText += arcamera.TrackingStateReason;
 
 			// see "Render with Realistic Lighting"
 			// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
 			var ambientIntensity = (float) frame.LightEstimate.AmbientIntensity / 1000f;
-			Zone.AmbientColor = Color.White * ambientIntensity * 0.2f;
+			Light.Brightness = 0.5f + ambientIntensity / 2;
+			DebugHud.AdditionalText += "\nAmb: " + ambientIntensity.ToString("F1");
+
 
 			//use outside of InvokeOnMain?
 			if (yuvTexturesInited)
 				UpdateBackground(frame);
+			
 			// required!
 			frame.Dispose();
 		}

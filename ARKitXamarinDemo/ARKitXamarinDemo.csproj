@@ -39,11 +39,12 @@
     <CodesignKey>iPhone Developer</CodesignKey>
     <MtouchFloat32>true</MtouchFloat32>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <MtouchLink>SdkOnly</MtouchLink>
-    <MtouchArch>ARMv7, ARM64</MtouchArch>
+    <MtouchLink>Full</MtouchLink>
+    <MtouchArch>ARM64</MtouchArch>
     <MtouchHttpClientHandler>HttpClientHandler</MtouchHttpClientHandler>
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OptimizePNGs>false</OptimizePNGs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
     <DebugType>pdbonly</DebugType>
@@ -71,7 +72,7 @@
     <CodesignKey>iPhone Developer</CodesignKey>
     <DeviceSpecificBuild>true</DeviceSpecificBuild>
     <MtouchDebug>true</MtouchDebug>
-    <MtouchNoSymbolStrip>true</MtouchNoSymbolStrip>
+    <MtouchNoSymbolStrip>false</MtouchNoSymbolStrip>
     <MtouchFastDev>true</MtouchFastDev>
     <MtouchFloat32>true</MtouchFloat32>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
@@ -81,6 +82,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OptimizePNGs>false</OptimizePNGs>
+    <MtouchEnableSGenConc>false</MtouchEnableSGenConc>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -88,7 +90,7 @@
     <Reference Include="System.Core" />
     <Reference Include="Xamarin.iOS" />
     <Reference Include="Urho">
-      <HintPath>..\packages\UrhoSharp.1.5.2\lib\Xamarin.iOS10\Urho.dll</HintPath>
+      <HintPath>..\packages\UrhoSharp.1.5.10\lib\Xamarin.iOS10\Urho.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -108,7 +110,6 @@
   <ItemGroup>
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
-    <None Include="UrhoSharpReadme.txt" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

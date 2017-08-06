@@ -1,10 +1,6 @@
 ﻿using System;
 using Urho;
-using Urho.Actions;
-using Urho.Gui;
 using Urho.Resources;
-using Urho.Shapes;
-using Urho.Urho2D;
 
 namespace ARKitXamarinDemo
 {
@@ -20,26 +16,43 @@ namespace ARKitXamarinDemo
 			UnhandledException += OnUnhandledException;
 			Log.LogLevel = LogLevel.Debug;
 
-			base.Start ();
+			base.Start();
 
 			// Mutant
 			mutantNode = Scene.CreateChild();
-			mutantNode.Position = new Vector3(0, -1f, 1f);
-			mutantNode.SetScale(0.5f);
-			var mutant = mutantNode.CreateComponent<AnimatedModel>();
-			mutant.Model = ResourceCache.GetModel("Models/Mutant.mdl");
-			mutant.SetMaterial(ResourceCache.GetMaterial("Materials/mutant_M.xml"));
+			mutantNode.SetScale(0.4f);
+			mutantNode.Position = new Vector3(0, -1, 1);
+
+			var model = mutantNode.CreateComponent<AnimatedModel>();
+			model.Model = ResourceCache.GetModel("Models/Mutant.mdl");
+			model.Material = ResourceCache.GetMaterial("Materials/mutant_M.xml");
+			model.CastShadows = true;
+
 			var animation = mutantNode.CreateComponent<AnimationController>();
 			animation.Play("Animations/Mutant_HipHop1.ani", 0, true, 0.2f);
 
-			Input.TouchMove += OnTouchMove;
+			Input.TouchEnd += OnTouchEnd;
 		}
 
-
-		void OnTouchMove(TouchMoveEventArgs e)
+		void OnTouchEnd(TouchEndEventArgs e)
 		{
-			float speed = 0.001f;
-			mutantNode.Translate(new Vector3(0/*e.DX * speed*/, -e.DY * speed, 0));
+			var pos = HitTest(e.X / (float)Graphics.Width, e.Y / (float)Graphics.Height);
+			if (pos != null)
+				mutantNode.Position = pos.Value;
+		}
+
+		protected override void OnUpdate(float timeStep)
+		{
+			if (Input.NumTouches == 2)
+			{
+				var state1 = Input.GetTouch(0);
+				var state2 = Input.GetTouch(1);
+				var distance1 = IntVector2.Distance(state1.Position, state2.Position);
+				var distance2 = IntVector2.Distance(state1.LastPosition, state2.LastPosition);
+				mutantNode.SetScale(mutantNode.Scale.X + (distance1 - distance2) / 10000f);
+			}
+
+			base.OnUpdate(timeStep);
 		}
 
 		void OnUnhandledException(object sender, Urho.UnhandledExceptionEventArgs e)

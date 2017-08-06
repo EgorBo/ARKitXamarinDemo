@@ -19,11 +19,11 @@ void PS()
 	//flip vertically
 	vec2 vTexCoord = vec2(vScreenPos.x, 1.0 - vScreenPos.y);
 
-	//TODO: surface RenderPathCommand::SetShaderCommand and pass these parameters:
-	float scale = 0.9;
+	//scale
+	vec2 scale = vec2(cCameraScale, cCameraScale);
 	float offset = 0.05;
 	vec2 center = vec2(0.5,0.5);
-	vTexCoord = (vTexCoord - center) * vec2(scale, scale) + center;
+	vTexCoord = (vTexCoord - center) * scale + center;
 
 	mat4 ycbcrToRGBTransform = mat4(
 		vec4(+1.0000, +1.0000, +1.0000, +0.0000),
