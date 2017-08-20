@@ -146,8 +146,6 @@
     <BundleResource Include="Resources\UrhoData\Models\Mutant.mdl" />
     <BundleResource Include="Resources\UrhoData\Textures\Mutant_diffuse.jpg" />
     <BundleResource Include="Resources\UrhoData\Textures\Mutant_normal.jpg" />
-    <BundleResource Include="Resources\UrhoData\tttt.xml" />
-    <BundleResource Include="Resources\UrhoData\tt.xml" />
     <BundleResource Include="Resources\UrhoData\Techniques\DiffOutline.xml" />
     <BundleResource Include="Resources\UrhoData\Shaders\GLSL\Outline.glsl" />
     <BundleResource Include="Resources\UrhoData\Textures\Cursor.png" />
