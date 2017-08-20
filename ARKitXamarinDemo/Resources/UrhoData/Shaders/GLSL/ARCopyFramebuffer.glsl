@@ -20,10 +20,8 @@ void PS()
 	vec2 vTexCoord = vec2(vScreenPos.x, 1.0 - vScreenPos.y);
 
 	//scale
-	vec2 scale = vec2(0.9, 1);
-	float offset = 0.05;
 	vec2 center = vec2(0.5,0.5);
-	vTexCoord = (vTexCoord - center) * scale + center;
+	vTexCoord = (vTexCoord - center) * vec2(cCameraScale, 1) + center;
 
 	mat4 ycbcrToRGBTransform = mat4(
 		vec4(+1.0000, +1.0000, +1.0000, +0.0000),
@@ -31,7 +29,7 @@ void PS()
 		vec4(+1.4020, -0.7141, +0.0000, +0.0000),
 		vec4(-0.7010, +0.5291, -0.8860, +1.0000));
 
-	vec4 ycbcr = vec4(texture2D(sDiffMap, vec2(vTexCoord.x + offset, vTexCoord.y)).r,
+	vec4 ycbcr = vec4(texture2D(sDiffMap, vec2(vTexCoord.x + 0.05, vTexCoord.y)).r,
 					  texture2D(sNormalMap, vTexCoord).ra, 1.0);
 	gl_FragColor = ycbcrToRGBTransform * ycbcr;
 }

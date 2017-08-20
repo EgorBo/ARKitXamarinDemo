@@ -8,6 +8,7 @@ using ARKit;
 using Urho;
 using System.Runtime.CompilerServices;
 using Urho.Urho2D;
+using UIKit;
 
 namespace ARKitXamarinDemo
 {
@@ -104,7 +105,7 @@ namespace ARKitXamarinDemo
 		{
 			var arcamera = frame?.Camera;
 			var transform = arcamera.Transform;
-			var prj = arcamera.ProjectionMatrix;
+            var prj = arcamera.GetProjectionMatrix(UIInterfaceOrientation.LandscapeRight, new CoreGraphics.CGSize(Graphics.Width, Graphics.Height), 0.01f, 30f);
 
 			//Urho accepts projection matrix in DirectX format (negative row3 + transpose)
 			var urhoProjection = new Matrix4(
@@ -145,7 +146,13 @@ namespace ARKitXamarinDemo
 				var cmd = rp.GetCommand(1); //see ARRenderPath.xml, second command.
 				cmd->SetTextureName(TextureUnit.Diffuse, cameraYtexture.Name); //sDiffMap
 				cmd->SetTextureName(TextureUnit.Normal, cameraUVtexture.Name); //sNormalMap
-				cmd->SetShaderParameter("CameraScale", 1f);
+
+                var capturedImage = frame.CapturedImage;
+				var nativeBounds = UIScreen.MainScreen.NativeBounds;
+				float imageAspect = (float)capturedImage.Width / (float)capturedImage.Height;
+				float screenAspect = (float)nativeBounds.Size.Height / (float)nativeBounds.Size.Width;
+
+				cmd->SetShaderParameter("CameraScale", screenAspect / imageAspect);
 
 				Viewport.RenderPath = rp;
 				yuvTexturesInited = true;
@@ -185,8 +192,6 @@ namespace ARKitXamarinDemo
 				int wUv = (int)img.GetWidthOfPlane(1);
 				int hUv = (int)img.GetHeightOfPlane(1);
 
-                //Debug.WriteLine($"Camera texture - Y:{wY}x{hY}, UV:{wUv}x{hUv}, Ratio:{wUv/(float)hUv}\nScreen: {Graphics.Width}x{Graphics.Height} ({Graphics.Width/(float)Graphics.Height})");
-
                 cameraYtexture.SetData(0, 0, 0, wY, hY, (void*)yPtr);
                 cameraUVtexture.SetData(0, 0, 0, wUv, hUv, (void*)uvPtr);
             }
@@ -195,7 +200,7 @@ namespace ARKitXamarinDemo
 		protected Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f)
 		{
 			var result = ARSession?.CurrentFrame?.HitTest(new CoreGraphics.CGPoint(screenX, screenY),
-				ARHitTestResultType.ExistingPlaneUsingExtent)?.FirstOrDefault();
+				ARHitTestResultType.ExistingPlaneUsingExtent | ARHitTestResultType.FeaturePoint)?.FirstOrDefault();
 			if (result != null)
 			{
 				var row = result.WorldTransform.Row3;

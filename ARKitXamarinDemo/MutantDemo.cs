@@ -10,6 +10,7 @@ namespace ARKitXamarinDemo
 		public MutantDemo(ApplicationOptions opts) : base(opts) { }
 
 		Node mutantNode;
+		bool scaling;
 
 		protected override unsafe void Start()
 		{
@@ -21,21 +22,30 @@ namespace ARKitXamarinDemo
 			// Mutant
 			mutantNode = Scene.CreateChild();
 			mutantNode.SetScale(0.3f);
-			mutantNode.Position = new Vector3(0, -1, 1);
+			mutantNode.Position = new Vector3(0, -0.5f, 1);
 
 			var model = mutantNode.CreateComponent<AnimatedModel>();
 			model.Model = ResourceCache.GetModel("Models/Mutant.mdl");
 			model.Material = ResourceCache.GetMaterial("Materials/mutant_M.xml");
-			model.CastShadows = true;
 
 			var animation = mutantNode.CreateComponent<AnimationController>();
-			animation.Play("Animations/Mutant_HipHop1.ani", 0, true, 0.2f);
+            animation.Play("Animations/Mutant_HipHop1.ani", 0, true, 0.2f);
 
+            Input.TouchBegin += OnTouchBegin;
 			Input.TouchEnd += OnTouchEnd;
 		}
 
-		void OnTouchEnd(TouchEndEventArgs e)
+
+        void OnTouchBegin(TouchBeginEventArgs e)
+        {
+            scaling = false;
+        }
+
+        void OnTouchEnd(TouchEndEventArgs e)
 		{
+            if (scaling)
+                return;
+            
 			var pos = HitTest(e.X / (float)Graphics.Width, e.Y / (float)Graphics.Height);
 			if (pos != null)
 				mutantNode.Position = pos.Value;
@@ -45,6 +55,7 @@ namespace ARKitXamarinDemo
 		{
 			if (Input.NumTouches == 2)
 			{
+                scaling = true;
 				var state1 = Input.GetTouch(0);
 				var state2 = Input.GetTouch(1);
 				var distance1 = IntVector2.Distance(state1.Position, state2.Position);
