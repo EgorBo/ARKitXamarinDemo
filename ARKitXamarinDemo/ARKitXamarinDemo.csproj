@@ -119,6 +119,7 @@
     <Compile Include="AppDelegate.cs" />
     <Compile Include="MutantDemo.cs" />
     <Compile Include="CrowdDemo.cs" />
+    <Compile Include="RulerDemo.cs" />
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\UrhoData\ARRenderPath.xml" />

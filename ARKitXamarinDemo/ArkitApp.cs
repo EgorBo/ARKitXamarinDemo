@@ -47,6 +47,8 @@ namespace ARKitXamarinDemo
 		public MonoDebugHud DebugHud { get; private set; }
 		public ARSession ARSession { get; private set; }
 		public Node AnchorsNode { get; private set; }
+        public bool ContinuesHitTestAtCenter { get; set; }
+        public Vector3? LastHitTest { get; private set; }
 
 		void CreateArScene()
 		{
@@ -158,6 +160,9 @@ namespace ARKitXamarinDemo
 				yuvTexturesInited = true;
 			}
 
+            if (ContinuesHitTestAtCenter)
+                LastHitTest = HitTest();
+
 			// display tracking state (quality)
 			DebugHud.AdditionalText = $"{arcamera.TrackingState}\n";
 			if (arcamera.TrackingStateReason != ARTrackingStateReason.None)
@@ -197,10 +202,16 @@ namespace ARKitXamarinDemo
             }
 		}
 
-		protected Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f)
+        protected Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f) => 
+            HitTest(ARSession?.CurrentFrame, screenX, screenY);
+
+		Vector3? HitTest(ARFrame frame, float screenX = 0.5f, float screenY = 0.5f)
 		{
-			var result = ARSession?.CurrentFrame?.HitTest(new CoreGraphics.CGPoint(screenX, screenY),
-				ARHitTestResultType.ExistingPlaneUsingExtent | ARHitTestResultType.FeaturePoint)?.FirstOrDefault();
+			var result = frame?.HitTest(new CoreGraphics.CGPoint(screenX, screenY),
+				ARHitTestResultType.ExistingPlaneUsingExtent
+                | ARHitTestResultType.FeaturePoint
+                )?.FirstOrDefault();
+            
 			if (result != null)
 			{
 				var row = result.WorldTransform.Row3;
