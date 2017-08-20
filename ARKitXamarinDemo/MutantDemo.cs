@@ -20,7 +20,7 @@ namespace ARKitXamarinDemo
 
 			// Mutant
 			mutantNode = Scene.CreateChild();
-			mutantNode.SetScale(0.4f);
+			mutantNode.SetScale(0.3f);
 			mutantNode.Position = new Vector3(0, -1, 1);
 
 			var model = mutantNode.CreateComponent<AnimatedModel>();

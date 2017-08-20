@@ -20,7 +20,7 @@ void PS()
 	vec2 vTexCoord = vec2(vScreenPos.x, 1.0 - vScreenPos.y);
 
 	//scale
-	vec2 scale = vec2(cCameraScale, cCameraScale);
+	vec2 scale = vec2(0.9, 1);
 	float offset = 0.05;
 	vec2 center = vec2(0.5,0.5);
 	vTexCoord = (vTexCoord - center) * scale + center;

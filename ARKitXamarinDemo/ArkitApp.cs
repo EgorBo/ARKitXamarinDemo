@@ -59,11 +59,9 @@ namespace ARKitXamarinDemo
 			Scene = new Scene(Context);
 			Octree = Scene.CreateComponent<Octree>();
 			Zone = Scene.CreateComponent<Zone>();
-			Zone.AmbientColor = Color.White * 0.1f;
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
-			LightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
 			Light = LightNode.CreateComponent<Light>();
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
@@ -91,24 +89,19 @@ namespace ARKitXamarinDemo
 
 			arSessionDelegate = new UrhoARSessionDelegate(this);
 			ARSession = new ARSession() { Delegate = arSessionDelegate };
-			var config = new ARWorldTrackingSessionConfiguration();
 			//disable PlaneDetection on devices with A8 (iPhone 6 for example)
 			config.PlaneDetection = ARPlaneDetection.Horizontal;
-			ARSession.Run(config);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		unsafe protected void ApplyTransform(Node node, OpenTK.Matrix4 matrix)
 		{
-			Stopwatch sw = Stopwatch.StartNew();
 			Matrix4 urhoTransform = *(Matrix4*)(void*)&matrix;
 			var rotation = urhoTransform.Rotation;
 			rotation.Z *= -1;
 			node.Rotation = rotation;
 			var pos = matrix.Row3;
 			node.Position = new Vector3(pos.X, pos.Y, -pos.Z);
-			sw.Stop();
-			System.Console.WriteLine(sw.ElapsedMilliseconds.ToString());
 		}
 
 		public unsafe void ProcessARFrame(ARSession session, ARFrame frame)
@@ -169,7 +162,6 @@ namespace ARKitXamarinDemo
 
 			// see "Render with Realistic Lighting"
 			// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
-			var ambientIntensity = (float) frame.LightEstimate.AmbientIntensity / 1000f;
 			Light.Brightness = 0.5f + ambientIntensity / 2;
 			DebugHud.AdditionalText += "\nAmb: " + ambientIntensity.ToString("F1");
 
@@ -177,29 +169,19 @@ namespace ARKitXamarinDemo
 			//use outside of InvokeOnMain?
 			if (yuvTexturesInited)
 				UpdateBackground(frame);
-			
 			// required!
 			frame.Dispose();
 		}
 
 		unsafe void UpdateBackground(ARFrame frame)
 		{
-			using (var img = frame.CapturedImage)
-			{
-				var yPtr = img.BaseAddress;
-				var uvPtr = img.GetBaseAddress(1);
 
-				if (yPtr == IntPtr.Zero || uvPtr == IntPtr.Zero)
-					return;
 
-				cameraYtexture.SetData(0, 0, 0, (int)img.Width, (int)img.Height, (void*)yPtr);
-				cameraUVtexture.SetData(0, 0, 0, (int)img.GetWidthOfPlane(1), (int)img.GetHeightOfPlane(1), (void*)uvPtr);
-			}
+
 		}
 
 		protected Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f)
 		{
-			var result = ARSession.CurrentFrame.HitTest(new CoreGraphics.CGPoint(screenX, screenY),
 				ARHitTestResultType.ExistingPlaneUsingExtent)?.FirstOrDefault();
 			if (result != null)
 			{
@@ -226,8 +208,6 @@ namespace ARKitXamarinDemo
 
 		public override void DidUpdateFrame (ARSession session, ARFrame frame)
 		{
-			if (arkitApp.TryGetTarget (out var ap))
-				Urho.Application.InvokeOnMain(() => ap.ProcessARFrame (session, frame));
 		}
 
 		public override void DidFail (ARSession session, Foundation.NSError error)
