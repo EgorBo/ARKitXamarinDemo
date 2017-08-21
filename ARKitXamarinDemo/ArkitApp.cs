@@ -89,7 +89,8 @@ namespace ARKitXamarinDemo
 			AnchorsNode = Scene.CreateChild();
 			FeaturePointsCloudeNode = Scene.CreateChild();
 
-			loadingLabel = new Text {
+			loadingLabel = new Text
+			{
 				Value = "Detecting planes...",
 				HorizontalAlignment = HorizontalAlignment.Center,
 				VerticalAlignment = VerticalAlignment.Center
@@ -99,9 +100,9 @@ namespace ARKitXamarinDemo
 			UI.Root.AddChild(loadingLabel);
 		}
 
-		protected override void Start ()
+		protected override void Start()
 		{
-			CreateArScene ();
+			CreateArScene();
 
 			arSessionDelegate = new UrhoARSessionDelegate(this);
 			ARSession = new ARSession() { Delegate = arSessionDelegate };
@@ -129,11 +130,11 @@ namespace ARKitXamarinDemo
 
 			//Urho accepts projection matrix in DirectX format (negative row3 + transpose)
 			var urhoProjection = new Matrix4(
-				 prj.M11,  prj.M21, -prj.M31,  prj.M41,
-				 prj.M12,  prj.M22, -prj.M32,  prj.M42,
-				 prj.M13,  prj.M23, -prj.M33,  prj.M43,
-				 prj.M14,  prj.M24, -prj.M34,  prj.M44);
-			
+				 prj.M11, prj.M21, -prj.M31, prj.M41,
+				 prj.M12, prj.M22, -prj.M32, prj.M42,
+				 prj.M13, prj.M23, -prj.M33, prj.M43,
+				 prj.M14, prj.M24, -prj.M34, prj.M44);
+
 			Camera.SetProjection(urhoProjection);
 			ApplyTransform(CameraNode, transform);
 
@@ -222,7 +223,7 @@ namespace ARKitXamarinDemo
 			}
 		}
 
-		public Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f) => 
+		public Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f) =>
 			HitTest(ARSession?.CurrentFrame, screenX, screenY);
 
 		Vector3? HitTest(ARFrame frame, float screenX = 0.5f, float screenY = 0.5f)
@@ -281,17 +282,25 @@ namespace ARKitXamarinDemo
 
 			if (anchor is ARPlaneAnchor planeAnchor)
 			{
+				Node planeNode = null;
 				if (node == null)
 				{
 					var id = planeAnchor.Identifier.ToString();
 					node = AnchorsNode.CreateChild(id);
-					var plane = node.CreateComponent<StaticModel>();
+					planeNode = node.CreateChild("SubPlane");
+					var plane = planeNode.CreateComponent<StaticModel>();
+					planeNode.Position = new Vector3();
 					plane.Model = CoreAssets.Models.Plane;
+					plane.Material = ResourceCache.GetMaterial("Materials/PlaneTileMat.xml");
 				}
+				else
+					planeNode = node.GetChild("SubPlane");
 
-				Debug.WriteLine($"ARPlaneAnchor  Extent({planeAnchor.Extent}), Center({planeAnchor.Center}), Position({planeAnchor.Transform.Row3}");
-				node.Scale = new Vector3(planeAnchor.Extent.X, 0.1f, planeAnchor.Extent.Z);
 				ApplyTransform(node, planeAnchor.Transform);
+
+				planeNode.Scale = new Vector3(planeAnchor.Extent.X, 0.1f, planeAnchor.Extent.Z);
+				planeNode.Position = new Vector3(planeAnchor.Center.X, planeAnchor.Center.Y, -planeAnchor.Center.Z);
+				Debug.WriteLine($"ARPlaneAnchor  Extent({planeAnchor.Extent}), Center({planeAnchor.Center}), Position({planeAnchor.Transform.Row3}");
 			}
 		}
 	}
@@ -300,35 +309,35 @@ namespace ARKitXamarinDemo
 	{
 		WeakReference<ArkitApp> arkitApp;
 
-		public UrhoARSessionDelegate (ArkitApp arkitApp)
+		public UrhoARSessionDelegate(ArkitApp arkitApp)
 		{
 			this.arkitApp = new WeakReference<ArkitApp>(arkitApp);
 		}
 
-		public override void CameraDidChangeTrackingState (ARSession session, ARCamera camera)
+		public override void CameraDidChangeTrackingState(ARSession session, ARCamera camera)
 		{
-			Console.WriteLine ("CameraDidChangeTrackingState");
+			Console.WriteLine("CameraDidChangeTrackingState");
 		}
 
-		public override void DidUpdateFrame (ARSession session, ARFrame frame)
+		public override void DidUpdateFrame(ARSession session, ARFrame frame)
 		{
 			if (arkitApp.TryGetTarget(out var ap))
 				Urho.Application.InvokeOnMain(() => ap.ProcessARFrame(session, frame));
 		}
 
-		public override void DidFail (ARSession session, Foundation.NSError error)
+		public override void DidFail(ARSession session, Foundation.NSError error)
 		{
-			Console.WriteLine ("DidFail");
+			Console.WriteLine("DidFail");
 		}
 
-		public override void SessionWasInterrupted (ARSession session)
+		public override void SessionWasInterrupted(ARSession session)
 		{
-			Console.WriteLine ("SessionWasInterrupted");
+			Console.WriteLine("SessionWasInterrupted");
 		}
 
-		public override void SessionInterruptionEnded (ARSession session)
+		public override void SessionInterruptionEnded(ARSession session)
 		{
-			Console.WriteLine ("SessionInterruptionEnded");
+			Console.WriteLine("SessionInterruptionEnded");
 		}
 
 		public override void DidAddAnchors(ARSession session, ARAnchor[] anchors)
