@@ -202,17 +202,18 @@ namespace ARKitXamarinDemo
             }
 		}
 
-        protected Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f) => 
+        public Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f) => 
             HitTest(ARSession?.CurrentFrame, screenX, screenY);
 
 		Vector3? HitTest(ARFrame frame, float screenX = 0.5f, float screenY = 0.5f)
 		{
 			var result = frame?.HitTest(new CoreGraphics.CGPoint(screenX, screenY),
 				ARHitTestResultType.ExistingPlaneUsingExtent
-                | ARHitTestResultType.FeaturePoint
+				// not sure we should add FeaturePoint here, it works fast but not really accurate
+				| ARHitTestResultType.FeaturePoint
                 )?.FirstOrDefault();
-            
-			if (result != null)
+
+            if (result != null && result.Distance > 0.2f)
 			{
 				var row = result.WorldTransform.Row3;
 				return new Vector3(row.X, row.Y, -row.Z);

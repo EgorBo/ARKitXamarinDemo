@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Urho;
 using Urho.Actions;
 using Urho.Gui;
-using Urho.Resources;
 using Urho.Shapes;
 
 namespace ARKitXamarinDemo
@@ -19,6 +18,7 @@ namespace ARKitXamarinDemo
 		Node prevNode;
 		Node pointerNode;
 		Vector3? cursorPos;
+        Cursor realCursor;
 
 		protected override unsafe void Start()
 		{
@@ -26,33 +26,48 @@ namespace ARKitXamarinDemo
 
 			base.Start();
 
-			this.Log.LogLevel = LogLevel.Warning;
-
-			pointerNode = Scene.CreateChild();
-			pointerNode.SetScale(0.1f);
-			var pointer = pointerNode.CreateComponent<Sphere>();
-			pointer.Color = Color.Cyan;
-			pointerNode.Name = "RulerPoint";
-
-			textNode = pointerNode.CreateChild();
-			textNode.SetScale(3);
-			textNode.Translate(Vector3.UnitY * 2);
-			textNode.AddRef();
-			var text = textNode.CreateComponent<Text3D>();
-			text.HorizontalAlignment = HorizontalAlignment.Center;
-			text.VerticalAlignment = VerticalAlignment.Top;
-			text.TextEffect = TextEffect.Stroke;
-			text.EffectColor = Color.Black;
-			text.SetColor(Color.White);
-			text.SetFont(CoreAssets.Fonts.AnonymousPro, 50);
-
-            ContinuesHitTestAtCenter = true;
-
+			Log.LogLevel = LogLevel.Warning;
+            realCursor = Scene.CreateComponent<Cursor>();
 			Input.TouchEnd += OnTouchEnd;
 		}
 
         void OnTouchEnd(TouchEndEventArgs e)
 		{
+            if (realCursor != null)
+            {
+                if (realCursor.Position != null)
+                {
+                    var pos = realCursor.Position.Value;
+                    realCursor.Remove();
+                    realCursor = null;
+
+                    var fakePlaneNode = Scene.CreateChild();
+                    fakePlaneNode.Position = pos;
+                    fakePlaneNode.Scale = new Vector3(100, 1, 100);
+                    var fakePlane = fakePlaneNode.CreateComponent<Urho.Shapes.Plane>();
+                    fakePlane.Color = Color.Transparent;
+
+					pointerNode = Scene.CreateChild();
+					pointerNode.SetScale(0.03f);
+					var pointer = pointerNode.CreateComponent<Sphere>();
+					pointer.Color = Color.Cyan;
+					pointerNode.Name = "RulerPoint";
+
+					textNode = pointerNode.CreateChild();
+					textNode.SetScale(3);
+					textNode.Translate(Vector3.UnitY * 2);
+					textNode.AddRef();
+					var text = textNode.CreateComponent<Text3D>();
+					text.HorizontalAlignment = HorizontalAlignment.Center;
+					text.VerticalAlignment = VerticalAlignment.Top;
+					text.TextEffect = TextEffect.Stroke;
+					text.EffectColor = Color.Black;
+					text.SetColor(Color.White);
+					text.SetFont(CoreAssets.Fonts.AnonymousPro, 50);
+                }
+                return;
+            }
+
 			if (cursorPos == null)
 				return;
 
@@ -83,19 +98,19 @@ namespace ARKitXamarinDemo
 		{
 			base.OnUpdate(timeStep);
 
-            //var ray = Camera.GetScreenRay(0.5f, 0.5f);
-            //var raycastResult = Octree.RaycastSingle(ray);
-            //if (raycastResult != null)
-            if (LastHitTest != null)
+            if (realCursor != null)
+                return;
+
+            var ray = Camera.GetScreenRay(0.5f, 0.5f);
+            var raycastResult = Octree.RaycastSingle(ray);
+            if (raycastResult != null)
 			{
-				/*var pos = raycastResult.Value.Position;
+				var pos = raycastResult.Value.Position;
 				if (!raycastResult.Value.Node.Name.StartsWith("RulerPoint"))
 				{
 					pointerNode.Position = pos;
 					cursorPos = pos;
-				}*/
-				pointerNode.Position = LastHitTest.Value;
-				cursorPos = LastHitTest.Value;
+				}
 			}
 			else
 			{
@@ -114,7 +129,7 @@ namespace ARKitXamarinDemo
 
 		void AddConnection(Node point1, Node point2 = null)
 		{
-			const float size = 0.03f;
+			const float size = 0.02f;
 			var node = Scene.CreateChild();
 			Vector3 v1 = point1.Position;
 			Vector3 v2 = point2?.Position ?? Vector3.Zero;
@@ -129,4 +144,54 @@ namespace ARKitXamarinDemo
 			node.RunActions(new TintTo(1f, 0f, 1f, 1f, 1f));
 		}
 	}
+
+	public class Cursor : Component
+	{
+		public Node CursorNode { get; private set; }
+		public StaticModel CursorModel { get; private set; }
+		public Vector3? Position => app.LastHitTest;
+
+		ArkitApp app;
+		bool continuesHitTest;
+
+		[Preserve]
+		public Cursor()
+		{
+			ReceiveSceneUpdates = true;
+		}
+
+		public override void OnAttachedToNode(Node node)
+		{
+			CursorNode = Node.CreateChild();
+			CursorNode.Position = Vector3.UnitZ * 100; //hide cursor at start - pos at (0,0,100) 
+			CursorModel = CursorNode.CreateComponent<Urho.Shapes.Plane>();
+			CursorModel.ViewMask = 0x80000000; //hide from raycasts (Raycast() uses a differen viewmask so the cursor won't be visible for it)
+			CursorNode.RunActions(new RepeatForever(new ScaleTo(0.3f, 0.15f), new ScaleTo(0.3f, 0.2f)));
+
+			var cursorMaterial = new Material();
+			cursorMaterial.SetTexture(TextureUnit.Diffuse, Application.ResourceCache.GetTexture2D("Textures/Cursor.png"));
+			cursorMaterial.SetTechnique(0, CoreAssets.Techniques.DiffAlpha);
+			CursorModel.Material = cursorMaterial;
+
+			app = (ArkitApp)Application;
+			continuesHitTest = app.ContinuesHitTestAtCenter;
+			app.ContinuesHitTestAtCenter = true;
+		}
+
+		protected override void OnDeleted()
+		{
+			CursorModel?.Remove();
+			app.ContinuesHitTestAtCenter = continuesHitTest;
+		}
+
+		protected override void OnUpdate(float timeStep)
+		{
+			base.OnUpdate(timeStep);
+			if (app?.LastHitTest != null)
+			{
+				CursorNode.Position = app.LastHitTest.Value;
+			}
+		}
+	}
+
 }
