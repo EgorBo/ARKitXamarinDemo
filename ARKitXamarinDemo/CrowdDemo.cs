@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Urho;
 using Urho.Actions;
+using Urho.Gui;
 using Urho.Navigation;
 
 namespace ARKitXamarinDemo
@@ -15,10 +16,12 @@ namespace ARKitXamarinDemo
 		Node cursorNode;
 		StaticModel cursorModel;
 		Material lastMutantMat;
+		Text loadingLabel;
 
 		const string WalkingAnimation = @"Animations/Mutant_Run.ani";
 		const string IdleAnimation = @"Animations/Mutant_Idle0.ani";
 		const string DeathAnimation = @"Animations/Mutant_Death.ani";
+		const string DanceAnimation = @"Animations/Mutant_HipHop1.ani";
 		const string MutantModel = @"Models/Mutant.mdl";
 		const string MutantMaterial = @"Materials/mutant_M.xml";
 
@@ -39,9 +42,12 @@ namespace ARKitXamarinDemo
 			cursorMaterial.SetTexture(TextureUnit.Diffuse, ResourceCache.GetTexture2D("Textures/Cursor.png"));
 			cursorMaterial.SetTechnique(0, CoreAssets.Techniques.DiffAlpha);
 			cursorModel.Material = cursorMaterial;
+			cursorModel.CastShadows = false;
 
 			Input.TouchEnd += args => OnGestureTapped(args.X, args.Y);
 			UnhandledException += OnUnhandledException;
+
+			ContinuesHitTestAtCenter = true;
 		}
 
 		void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -87,8 +93,8 @@ namespace ARKitXamarinDemo
 				var anim = node.GetComponent<AnimationController>();
 				var agent = node.GetComponent<CrowdAgent>();
 				agent?.Remove();
+				await Delay(Randoms.Next(0f, 0.5f));
 				anim.Play(DeathAnimation, 0, false, 0.4f);
-				await Delay(Randoms.Next(0f, 0.2f));
 			}
 		}
 
@@ -123,15 +129,19 @@ namespace ARKitXamarinDemo
 			modelObject.Material.SetTechnique(0, ResourceCache.GetTechnique("Techniques/DiffOutline.xml"));
 			HighlightMaterial(modelObject.Material, false);
 
+			var shadowPlaneNode = mutantNode.CreateChild();
+			shadowPlaneNode.Scale = new Vector3(10, 1, 10);
+			shadowPlaneNode.CreateComponent<Urho.SharpReality.TransparentPlaneWithShadows>();
+
 			mutantNode.CreateComponent<AnimationController>().Play(IdleAnimation, 0, true, 0.2f);
 
 			// Create the CrowdAgent
 			var agent = mutantNode.CreateComponent<CrowdAgent>();
 			agent.Height = 0.2f;
 			agent.NavigationPushiness = NavigationPushiness.Medium;
-			agent.MaxSpeed = 0.4f;
-			agent.MaxAccel = 0.4f;
-			agent.Radius = 0.05f;
+			agent.MaxSpeed = 0.6f;
+			agent.MaxAccel = 0.6f;
+			agent.Radius = 0.06f;
 			agent.NavigationQuality = NavigationQuality.Medium;
 		}
 
@@ -158,11 +168,10 @@ namespace ARKitXamarinDemo
 				return;
 			}
 
-			var point = HitTest();
-			if (point != null)
+			if (LastHitTest != null)
 			{
 				surfaceIsValid = true;
-				cursorNode.Position = point.Value;
+				cursorNode.Position = LastHitTest.Value;
 			}
 			cursorModel.Material.SetShaderParameter(CoreAssets.ShaderParameters.MatDiffColor, surfaceIsValid ? Color.White : Color.Red);
 		}
@@ -177,6 +186,7 @@ namespace ARKitXamarinDemo
 
 			if (surfaceIsValid && !positionIsSelected)
 			{
+				ContinuesHitTestAtCenter = false;
 				var hitPos = cursorNode.Position - Vector3.UnitZ * 0.01f;
 				positionIsSelected = true;
 

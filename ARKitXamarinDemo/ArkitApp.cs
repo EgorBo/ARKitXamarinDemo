@@ -9,6 +9,8 @@ using Urho;
 using System.Runtime.CompilerServices;
 using Urho.Urho2D;
 using UIKit;
+using System.Diagnostics;
+using Urho.Gui;
 
 namespace ARKitXamarinDemo
 {
@@ -23,6 +25,7 @@ namespace ARKitXamarinDemo
 		Texture2D cameraUVtexture;
 		bool yuvTexturesInited;
 		ARSessionDelegate arSessionDelegate;
+		Text loadingLabel;
 
 		[Preserve]
 		/// <summary>
@@ -47,6 +50,7 @@ namespace ARKitXamarinDemo
 		public MonoDebugHud DebugHud { get; private set; }
 		public ARSession ARSession { get; private set; }
 		public Node AnchorsNode { get; private set; }
+		public Node FeaturePointsCloudeNode { get; private set; }
 		public bool ContinuesHitTestAtCenter { get; set; }
 		public Vector3? LastHitTest { get; private set; }
 
@@ -60,10 +64,14 @@ namespace ARKitXamarinDemo
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
-			LightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
+			LightNode.SetDirection(new Vector3(0.8f, -1.0f, 0f));
 			Light = LightNode.CreateComponent<Light>();
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
+			Light.Brightness = 1.5f;
+			Light.ShadowResolution = 4;
+			Light.ShadowIntensity = 0.8f;
+			Renderer.ShadowMapSize *= 2;
 
 			// Camera
 			CameraNode = Scene.CreateChild(name: "Camera");
@@ -79,6 +87,16 @@ namespace ARKitXamarinDemo
 			DebugHud.Show(Color.Black, 45);
 
 			AnchorsNode = Scene.CreateChild();
+			FeaturePointsCloudeNode = Scene.CreateChild();
+
+			loadingLabel = new Text {
+				Value = "Detecting planes...",
+				HorizontalAlignment = HorizontalAlignment.Center,
+				VerticalAlignment = VerticalAlignment.Center
+			};
+			loadingLabel.SetColor(new Color(0f, 1f, 0f));
+			loadingLabel.SetFont(font: CoreAssets.Fonts.AnonymousPro, size: 42);
+			UI.Root.AddChild(loadingLabel);
 		}
 
 		protected override void Start ()
@@ -99,7 +117,7 @@ namespace ARKitXamarinDemo
 			var rotation = urhoTransform.Rotation;
 			rotation.Z *= -1;
 			var pos = matrix.Row3;
-			node.Position = new Vector3(pos.X, pos.Y, -pos.Z);
+			node.SetWorldPosition(new Vector3(pos.X, pos.Y, -pos.Z));
 			node.Rotation = rotation;
 		}
 
@@ -156,12 +174,14 @@ namespace ARKitXamarinDemo
 
 				cmd->SetShaderParameter("CameraScale", screenAspect / imageAspect);
 
+				//rp.Append(CoreAssets.PostProcess.FXAA2);
 				Viewport.RenderPath = rp;
 				yuvTexturesInited = true;
 			}
 
 			if (ContinuesHitTestAtCenter)
 				LastHitTest = HitTest();
+
 
 			// display tracking state (quality)
 			DebugHud.AdditionalText = $"{arcamera.TrackingState}\n";
@@ -171,7 +191,7 @@ namespace ARKitXamarinDemo
 			// see "Render with Realistic Lighting"
 			// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
 			var ambientIntensity = (float)frame.LightEstimate.AmbientIntensity / 1000f;
-			Light.Brightness = 0.5f + ambientIntensity / 2;
+			//Light.Brightness = 0.5f + ambientIntensity / 2;
 			DebugHud.AdditionalText += "\nAmb: " + ambientIntensity.ToString("F1");
 
 			//use outside of InvokeOnMain?
@@ -209,16 +229,70 @@ namespace ARKitXamarinDemo
 		{
 			var result = frame?.HitTest(new CoreGraphics.CGPoint(screenX, screenY),
 				ARHitTestResultType.ExistingPlaneUsingExtent
-				// not sure we should add FeaturePoint here, it works fast but not really accurate
-				| ARHitTestResultType.FeaturePoint
 				)?.FirstOrDefault();
 
 			if (result != null && result.Distance > 0.2f)
 			{
+				HideLoadingLabel();
 				var row = result.WorldTransform.Row3;
 				return new Vector3(row.X, row.Y, -row.Z);
 			}
 			return null;
+		}
+
+		void HideLoadingLabel()
+		{
+			if (loadingLabel != null)
+			{
+				UI.Root.RemoveChild(loadingLabel);
+				loadingLabel = null;
+			}
+		}
+
+		internal void DidAddAnchors(ARAnchor[] anchors)
+		{
+			HideLoadingLabel();
+			foreach (var anchor in anchors)
+			{
+				UpdateAnchor(null, anchor);
+			}
+		}
+
+		internal void DidRemoveAnchors(ARAnchor[] anchors)
+		{
+			foreach (var anchor in anchors)
+			{
+				AnchorsNode.GetChild(anchor.Identifier.ToString())?.Remove();
+			}
+		}
+
+		internal void DidUpdateAnchors(ARAnchor[] anchors)
+		{
+			foreach (var anchor in anchors)
+			{
+				var node = AnchorsNode.GetChild(anchor.Identifier.ToString());
+				UpdateAnchor(node, anchor);
+			}
+		}
+
+		void UpdateAnchor(Node node, ARAnchor anchor)
+		{
+			return;// waits fix for https://bugzilla.xamarin.com/show_bug.cgi?id=58648
+
+			if (anchor is ARPlaneAnchor planeAnchor)
+			{
+				if (node == null)
+				{
+					var id = planeAnchor.Identifier.ToString();
+					node = AnchorsNode.CreateChild(id);
+					var plane = node.CreateComponent<StaticModel>();
+					plane.Model = CoreAssets.Models.Plane;
+				}
+
+				Debug.WriteLine($"ARPlaneAnchor  Extent({planeAnchor.Extent}), Center({planeAnchor.Center}), Position({planeAnchor.Transform.Row3}");
+				node.Scale = new Vector3(planeAnchor.Extent.X, 0.1f, planeAnchor.Extent.Z);
+				ApplyTransform(node, planeAnchor.Transform);
+			}
 		}
 	}
 
@@ -259,17 +333,20 @@ namespace ARKitXamarinDemo
 
 		public override void DidAddAnchors(ARSession session, ARAnchor[] anchors)
 		{
-			Console.WriteLine ("DidAddAnchors");
+			if (arkitApp.TryGetTarget(out var ap))
+				Urho.Application.InvokeOnMain(() => ap.DidAddAnchors(anchors));
 		}
 
 		public override void DidRemoveAnchors(ARSession session, ARAnchor[] anchors)
 		{
-			Console.WriteLine ("DidRemoveAnchors");
+			if (arkitApp.TryGetTarget(out var ap))
+				Urho.Application.InvokeOnMain(() => ap.DidRemoveAnchors(anchors));
 		}
 
 		public override void DidUpdateAnchors(ARSession session, ARAnchor[] anchors)
 		{
-			Console.WriteLine ("DidUpdateAnchors");
+			if (arkitApp.TryGetTarget(out var ap))
+				Urho.Application.InvokeOnMain(() => ap.DidUpdateAnchors(anchors));
 		}
 	}
 }
