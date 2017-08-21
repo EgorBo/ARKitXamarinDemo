@@ -18,7 +18,7 @@ namespace ARKitXamarinDemo
 		Node prevNode;
 		Node pointerNode;
 		Vector3? cursorPos;
-        Cursor realCursor;
+		Cursor realCursor;
 
 		protected override unsafe void Start()
 		{
@@ -27,25 +27,25 @@ namespace ARKitXamarinDemo
 			base.Start();
 
 			Log.LogLevel = LogLevel.Warning;
-            realCursor = Scene.CreateComponent<Cursor>();
+			realCursor = Scene.CreateComponent<Cursor>();
 			Input.TouchEnd += OnTouchEnd;
 		}
 
-        void OnTouchEnd(TouchEndEventArgs e)
+		void OnTouchEnd(TouchEndEventArgs e)
 		{
-            if (realCursor != null)
-            {
-                if (realCursor.Position != null)
-                {
-                    var pos = realCursor.Position.Value;
-                    realCursor.Remove();
-                    realCursor = null;
+			if (realCursor != null)
+			{
+				if (realCursor.Position != null)
+				{
+					var pos = realCursor.Position.Value;
+					realCursor.Remove();
+					realCursor = null;
 
-                    var fakePlaneNode = Scene.CreateChild();
-                    fakePlaneNode.Position = pos;
-                    fakePlaneNode.Scale = new Vector3(100, 1, 100);
-                    var fakePlane = fakePlaneNode.CreateComponent<Urho.Shapes.Plane>();
-                    fakePlane.Color = Color.Transparent;
+					var fakePlaneNode = Scene.CreateChild();
+					fakePlaneNode.Position = pos;
+					fakePlaneNode.Scale = new Vector3(100, 1, 100);
+					var fakePlane = fakePlaneNode.CreateComponent<Urho.Shapes.Plane>();
+					fakePlane.Color = Color.Transparent;
 
 					pointerNode = Scene.CreateChild();
 					pointerNode.SetScale(0.03f);
@@ -64,9 +64,9 @@ namespace ARKitXamarinDemo
 					text.EffectColor = Color.Black;
 					text.SetColor(Color.White);
 					text.SetFont(CoreAssets.Fonts.AnonymousPro, 50);
-                }
-                return;
-            }
+				}
+				return;
+			}
 
 			if (cursorPos == null)
 				return;
@@ -98,12 +98,12 @@ namespace ARKitXamarinDemo
 		{
 			base.OnUpdate(timeStep);
 
-            if (realCursor != null)
-                return;
+			if (realCursor != null)
+				return;
 
-            var ray = Camera.GetScreenRay(0.5f, 0.5f);
-            var raycastResult = Octree.RaycastSingle(ray);
-            if (raycastResult != null)
+			var ray = Camera.GetScreenRay(0.5f, 0.5f);
+			var raycastResult = Octree.RaycastSingle(ray);
+			if (raycastResult != null)
 			{
 				var pos = raycastResult.Value.Position;
 				if (!raycastResult.Value.Node.Name.StartsWith("RulerPoint"))

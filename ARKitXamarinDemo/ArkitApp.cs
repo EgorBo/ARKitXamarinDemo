@@ -12,12 +12,12 @@ using UIKit;
 
 namespace ARKitXamarinDemo
 {
-    /// <summary>
-    /// ARKitApp blends UrhoSharp with ARKit by providing an application that has been
-    /// configured with a basic scene, a camera, a light and can be fed frames from 
-    /// ARKit's ARSession.
-    /// </summary>
-    public class ArkitApp : Urho.Application
+	/// <summary>
+	/// ARKitApp blends UrhoSharp with ARKit by providing an application that has been
+	/// configured with a basic scene, a camera, a light and can be fed frames from 
+	/// ARKit's ARSession.
+	/// </summary>
+	public class ArkitApp : Urho.Application
 	{
 		Texture2D cameraYtexture;
 		Texture2D cameraUVtexture;
@@ -47,8 +47,8 @@ namespace ARKitXamarinDemo
 		public MonoDebugHud DebugHud { get; private set; }
 		public ARSession ARSession { get; private set; }
 		public Node AnchorsNode { get; private set; }
-        public bool ContinuesHitTestAtCenter { get; set; }
-        public Vector3? LastHitTest { get; private set; }
+		public bool ContinuesHitTestAtCenter { get; set; }
+		public Vector3? LastHitTest { get; private set; }
 
 		void CreateArScene()
 		{
@@ -60,7 +60,7 @@ namespace ARKitXamarinDemo
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
-            LightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
+			LightNode.SetDirection(new Vector3(0.6f, -1.0f, 0.8f));
 			Light = LightNode.CreateComponent<Light>();
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
@@ -89,7 +89,7 @@ namespace ARKitXamarinDemo
 			ARSession = new ARSession() { Delegate = arSessionDelegate };
 			var config = new ARWorldTrackingConfiguration();
 			config.PlaneDetection = ARPlaneDetection.Horizontal;
-            ARSession.Run(config, ARSessionRunOptions.RemoveExistingAnchors);
+			ARSession.Run(config, ARSessionRunOptions.RemoveExistingAnchors);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,7 +107,7 @@ namespace ARKitXamarinDemo
 		{
 			var arcamera = frame?.Camera;
 			var transform = arcamera.Transform;
-            var prj = arcamera.GetProjectionMatrix(UIInterfaceOrientation.LandscapeRight, new CoreGraphics.CGSize(Graphics.Width, Graphics.Height), 0.01f, 30f);
+			var prj = arcamera.GetProjectionMatrix(UIInterfaceOrientation.LandscapeRight, new CoreGraphics.CGSize(Graphics.Width, Graphics.Height), 0.01f, 30f);
 
 			//Urho accepts projection matrix in DirectX format (negative row3 + transpose)
 			var urhoProjection = new Matrix4(
@@ -149,7 +149,7 @@ namespace ARKitXamarinDemo
 				cmd->SetTextureName(TextureUnit.Diffuse, cameraYtexture.Name); //sDiffMap
 				cmd->SetTextureName(TextureUnit.Normal, cameraUVtexture.Name); //sNormalMap
 
-                var capturedImage = frame.CapturedImage;
+				var capturedImage = frame.CapturedImage;
 				var nativeBounds = UIScreen.MainScreen.NativeBounds;
 				float imageAspect = (float)capturedImage.Width / (float)capturedImage.Height;
 				float screenAspect = (float)nativeBounds.Size.Height / (float)nativeBounds.Size.Width;
@@ -160,8 +160,8 @@ namespace ARKitXamarinDemo
 				yuvTexturesInited = true;
 			}
 
-            if (ContinuesHitTestAtCenter)
-                LastHitTest = HitTest();
+			if (ContinuesHitTestAtCenter)
+				LastHitTest = HitTest();
 
 			// display tracking state (quality)
 			DebugHud.AdditionalText = $"{arcamera.TrackingState}\n";
@@ -184,26 +184,26 @@ namespace ARKitXamarinDemo
 
 		unsafe void UpdateBackground(ARFrame frame)
 		{
-            using (var img = frame.CapturedImage)
-            {
-                var yPtr = img.BaseAddress;
-                var uvPtr = img.GetBaseAddress(1);
+			using (var img = frame.CapturedImage)
+			{
+				var yPtr = img.BaseAddress;
+				var uvPtr = img.GetBaseAddress(1);
 
-                if (yPtr == IntPtr.Zero || uvPtr == IntPtr.Zero)
-                    return;
+				if (yPtr == IntPtr.Zero || uvPtr == IntPtr.Zero)
+					return;
 
-                int wY = (int)img.Width;
-                int hY = (int)img.Height;
+				int wY = (int)img.Width;
+				int hY = (int)img.Height;
 				int wUv = (int)img.GetWidthOfPlane(1);
 				int hUv = (int)img.GetHeightOfPlane(1);
 
-                cameraYtexture.SetData(0, 0, 0, wY, hY, (void*)yPtr);
-                cameraUVtexture.SetData(0, 0, 0, wUv, hUv, (void*)uvPtr);
-            }
+				cameraYtexture.SetData(0, 0, 0, wY, hY, (void*)yPtr);
+				cameraUVtexture.SetData(0, 0, 0, wUv, hUv, (void*)uvPtr);
+			}
 		}
 
-        public Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f) => 
-            HitTest(ARSession?.CurrentFrame, screenX, screenY);
+		public Vector3? HitTest(float screenX = 0.5f, float screenY = 0.5f) => 
+			HitTest(ARSession?.CurrentFrame, screenX, screenY);
 
 		Vector3? HitTest(ARFrame frame, float screenX = 0.5f, float screenY = 0.5f)
 		{
@@ -211,9 +211,9 @@ namespace ARKitXamarinDemo
 				ARHitTestResultType.ExistingPlaneUsingExtent
 				// not sure we should add FeaturePoint here, it works fast but not really accurate
 				| ARHitTestResultType.FeaturePoint
-                )?.FirstOrDefault();
+				)?.FirstOrDefault();
 
-            if (result != null && result.Distance > 0.2f)
+			if (result != null && result.Distance > 0.2f)
 			{
 				var row = result.WorldTransform.Row3;
 				return new Vector3(row.X, row.Y, -row.Z);
@@ -238,8 +238,8 @@ namespace ARKitXamarinDemo
 
 		public override void DidUpdateFrame (ARSession session, ARFrame frame)
 		{
-            if (arkitApp.TryGetTarget(out var ap))
-                Urho.Application.InvokeOnMain(() => ap.ProcessARFrame(session, frame));
+			if (arkitApp.TryGetTarget(out var ap))
+				Urho.Application.InvokeOnMain(() => ap.ProcessARFrame(session, frame));
 		}
 
 		public override void DidFail (ARSession session, Foundation.NSError error)

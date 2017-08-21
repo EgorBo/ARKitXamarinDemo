@@ -29,7 +29,7 @@ namespace ARKitXamarinDemo
 		{
 			await Task.Yield();
 
-            var app = new MutantDemo(new ApplicationOptions() { 
+			var app = new MutantDemo(new ApplicationOptions() { 
 				ResourcePaths = new string[] { "UrhoData" },
 				Orientation = ApplicationOptions.OrientationType.Landscape
 			});
