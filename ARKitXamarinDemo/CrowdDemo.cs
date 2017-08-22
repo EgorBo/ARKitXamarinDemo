@@ -16,7 +16,9 @@ namespace ARKitXamarinDemo
 		Node cursorNode;
 		StaticModel cursorModel;
 		Material lastMutantMat;
+		DynamicNavigationMesh navMesh;
 		Text loadingLabel;
+		bool detectingFirstPlane = true;
 
 		const string WalkingAnimation = @"Animations/Mutant_Run.ani";
 		const string IdleAnimation = @"Animations/Mutant_Idle0.ani";
@@ -31,6 +33,8 @@ namespace ARKitXamarinDemo
 		protected override async void Start()
 		{
 			base.Start();
+
+			Scene.CreateComponent<DebugRenderer>();
 
 			cursorNode = Scene.CreateChild();
 			cursorNode.Position = Vector3.UnitZ * 100; //hide cursor at start - pos at (0,0,100) 
@@ -48,6 +52,17 @@ namespace ARKitXamarinDemo
 			UnhandledException += OnUnhandledException;
 
 			ContinuesHitTestAtCenter = true;
+
+			loadingLabel = new Text {
+				Value = "Detecting planes...",
+				HorizontalAlignment = HorizontalAlignment.Center,
+				VerticalAlignment = VerticalAlignment.Center,
+				TextAlignment = HorizontalAlignment.Center,
+			};
+
+			loadingLabel.SetColor(new Color(0.5f, 1f, 0f));
+			loadingLabel.SetFont(font: CoreAssets.Fonts.AnonymousPro, size: 42);
+			UI.Root.AddChild(loadingLabel);
 		}
 
 		void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -58,6 +73,11 @@ namespace ARKitXamarinDemo
 
 		void SubscribeToEvents()
 		{
+			Engine.PostRenderUpdate += e => {
+				//Scene.GetComponent<DynamicNavigationMesh>().DrawDebugGeometry(true);
+				//crowdManager.DrawDebugGeometry(true);
+			};
+
 			crowdManager.CrowdAgentReposition += args => {
 				Node node = args.Node;
 				Vector3 velocity = args.Velocity * -1;
@@ -170,6 +190,9 @@ namespace ARKitXamarinDemo
 
 			if (LastHitTest != null)
 			{
+				if (detectingFirstPlane)
+					loadingLabel.Value = "Look around to create a navigation mesh\nTap anywhere when you finish.";
+				detectingFirstPlane = false;
 				surfaceIsValid = true;
 				cursorNode.Position = LastHitTest.Value;
 			}
@@ -182,34 +205,26 @@ namespace ARKitXamarinDemo
 			if (Input.NumTouches == 3)
 				KillAll();
 
-			NavigationMesh navMesh;
-
 			if (surfaceIsValid && !positionIsSelected)
 			{
+				UI.Root.RemoveChild(loadingLabel);
+				loadingLabel = null;
+				PlaneDetectionEnabled = false;
+				//hide planes:
+				ResourceCache.GetMaterial("Materials/PlaneTileMat.xml")
+				             .SetShaderParameter(CoreAssets.ShaderParameters.MatDiffColor, Color.Transparent);
 				ContinuesHitTestAtCenter = false;
-				var hitPos = cursorNode.Position - Vector3.UnitZ * 0.01f;
+				var hitPos = cursorNode.Position;// - Vector3.UnitZ * 0.01f;
 				positionIsSelected = true;
 
-				navMesh = Scene.CreateComponent<NavigationMesh>();
-
-				//this plane is a workaround 
-				//TODO: build a navmesh using spatial data
-
-				var planeNode = Scene.CreateChild();
-
-				var plane = planeNode.CreateComponent<StaticModel>();
-				plane.Model = CoreAssets.Models.Plane;
-				plane.SetMaterial(Material.FromColor(Color.Transparent));
-				planeNode.Scale = new Vector3(100, 1, 100);
-				planeNode.Position = hitPos;
-
+				navMesh = Scene.CreateComponent<DynamicNavigationMesh>();
 				Scene.CreateComponent<Navigable>();
 
-				navMesh.CellSize = 0.2f;
-				navMesh.CellHeight = 0.042f;
+				navMesh.CellSize = 0.1f;
+				navMesh.CellHeight = 0.05f;
 				navMesh.DrawOffMeshConnections = true;
 				navMesh.DrawNavAreas = true;
-				navMesh.TileSize = 2;
+				navMesh.TileSize = 1;
 				navMesh.AgentRadius = 0.1f;
 
 				navMesh.Build();
@@ -240,9 +255,7 @@ namespace ARKitXamarinDemo
 					return;
 
 				cursorNode.Position = hitPos.Value + Vector3.UnitY * 0.1f;
-				
-				navMesh = Scene.GetComponent<NavigationMesh>();
-				Vector3 pathPos = navMesh.FindNearestPoint(hitPos.Value, new Vector3(0.1f, 0.1f, 0.1f));
+				Vector3 pathPos = navMesh.FindNearestPoint(hitPos.Value, new Vector3(0.1f, 0.1f, 0.1f) * 5);
 				Scene.GetComponent<CrowdManager>().SetCrowdTarget(pathPos, Scene);
 			}
 		}

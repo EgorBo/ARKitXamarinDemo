@@ -11,6 +11,7 @@ using Urho.Urho2D;
 using UIKit;
 using System.Diagnostics;
 using Urho.Gui;
+using Urho.Navigation;
 
 namespace ARKitXamarinDemo
 {
@@ -25,7 +26,6 @@ namespace ARKitXamarinDemo
 		Texture2D cameraUVtexture;
 		bool yuvTexturesInited;
 		ARSessionDelegate arSessionDelegate;
-		Text loadingLabel;
 
 		[Preserve]
 		/// <summary>
@@ -53,6 +53,7 @@ namespace ARKitXamarinDemo
 		public Node FeaturePointsCloudeNode { get; private set; }
 		public bool ContinuesHitTestAtCenter { get; set; }
 		public Vector3? LastHitTest { get; private set; }
+		public bool PlaneDetectionEnabled { get; set; } = true;
 
 		void CreateArScene()
 		{
@@ -88,16 +89,6 @@ namespace ARKitXamarinDemo
 
 			AnchorsNode = Scene.CreateChild();
 			FeaturePointsCloudeNode = Scene.CreateChild();
-
-			loadingLabel = new Text
-			{
-				Value = "Detecting planes...",
-				HorizontalAlignment = HorizontalAlignment.Center,
-				VerticalAlignment = VerticalAlignment.Center
-			};
-			loadingLabel.SetColor(new Color(0f, 1f, 0f));
-			loadingLabel.SetFont(font: CoreAssets.Fonts.AnonymousPro, size: 42);
-			UI.Root.AddChild(loadingLabel);
 		}
 
 		protected override void Start()
@@ -234,25 +225,17 @@ namespace ARKitXamarinDemo
 
 			if (result != null && result.Distance > 0.2f)
 			{
-				HideLoadingLabel();
 				var row = result.WorldTransform.Row3;
 				return new Vector3(row.X, row.Y, -row.Z);
 			}
 			return null;
 		}
 
-		void HideLoadingLabel()
-		{
-			if (loadingLabel != null)
-			{
-				UI.Root.RemoveChild(loadingLabel);
-				loadingLabel = null;
-			}
-		}
-
 		internal void DidAddAnchors(ARAnchor[] anchors)
 		{
-			HideLoadingLabel();
+			if (!PlaneDetectionEnabled)
+				return;
+			
 			foreach (var anchor in anchors)
 			{
 				UpdateAnchor(null, anchor);
@@ -261,6 +244,9 @@ namespace ARKitXamarinDemo
 
 		internal void DidRemoveAnchors(ARAnchor[] anchors)
 		{
+			if (!PlaneDetectionEnabled)
+				return;
+			
 			foreach (var anchor in anchors)
 			{
 				AnchorsNode.GetChild(anchor.Identifier.ToString())?.Remove();
@@ -269,6 +255,9 @@ namespace ARKitXamarinDemo
 
 		internal void DidUpdateAnchors(ARAnchor[] anchors)
 		{
+			if (!PlaneDetectionEnabled)
+				return;
+			
 			foreach (var anchor in anchors)
 			{
 				var node = AnchorsNode.GetChild(anchor.Identifier.ToString());
@@ -278,7 +267,7 @@ namespace ARKitXamarinDemo
 
 		void UpdateAnchor(Node node, ARAnchor anchor)
 		{
-			return;// waits fix for https://bugzilla.xamarin.com/show_bug.cgi?id=58648
+			//return;// waits fix for https://bugzilla.xamarin.com/show_bug.cgi?id=58648
 
 			if (anchor is ARPlaneAnchor planeAnchor)
 			{
