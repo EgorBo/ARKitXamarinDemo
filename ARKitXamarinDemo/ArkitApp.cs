@@ -166,6 +166,7 @@ namespace ARKitXamarinDemo
 
 				cmd->SetShaderParameter("CameraScale", screenAspect / imageAspect);
 
+
 				//rp.Append(CoreAssets.PostProcess.FXAA2);
 				Viewport.RenderPath = rp;
 				yuvTexturesInited = true;
@@ -280,7 +281,20 @@ namespace ARKitXamarinDemo
 					var plane = planeNode.CreateComponent<StaticModel>();
 					planeNode.Position = new Vector3();
 					plane.Model = CoreAssets.Models.Plane;
-					plane.Material = ResourceCache.GetMaterial("Materials/PlaneTileMat.xml");
+
+					var tileMaterial = new Material();
+					tileMaterial.SetTexture(TextureUnit.Diffuse, ResourceCache.GetTexture2D("Textures/PlaneTile.png"));
+					var tech = new Technique();
+					var pass = tech.CreatePass("alpha");
+					pass.DepthWrite = false;
+					pass.BlendMode = BlendMode.Alpha;
+					pass.PixelShader = "PlaneTile";
+					pass.VertexShader = "PlaneTile";
+					tileMaterial.SetTechnique(0, tech);
+					tileMaterial.SetShaderParameter("MeshColor", new Color(Randoms.Next(), 1, Randoms.Next()));
+					tileMaterial.SetShaderParameter("MeshScale", 32.0f);
+
+					plane.Material = tileMaterial;
 				}
 				else
 					planeNode = node.GetChild("SubPlane");

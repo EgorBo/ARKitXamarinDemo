@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Urho;
 using Urho.Actions;
 using Urho.Gui;
@@ -65,7 +66,7 @@ namespace ARKitXamarinDemo
 			UI.Root.AddChild(loadingLabel);
 		}
 
-		void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+		void OnUnhandledException(object sender, Urho.UnhandledExceptionEventArgs e)
 		{
 			e.Handled = true;
 			System.Console.WriteLine(e);
@@ -211,8 +212,19 @@ namespace ARKitXamarinDemo
 				loadingLabel = null;
 				PlaneDetectionEnabled = false;
 				//hide planes:
-				ResourceCache.GetMaterial("Materials/PlaneTileMat.xml")
-				             .SetShaderParameter(CoreAssets.ShaderParameters.MatDiffColor, Color.Transparent);
+
+				foreach (var node in AnchorsNode.Children.ToArray())
+				{
+					// if surface is higher than floor - mark as Obstacle
+					if (Math.Abs(node.WorldPosition.Y - LastHitTest.Value.Y) >= 0.1f)
+					{
+						node.CreateComponent<Obstacle>();
+					}
+
+					var model = node.GetChild("SubPlane").GetComponent<StaticModel>();
+					model.Material.SetShaderParameter("MeshColor", Color.Transparent);
+				}
+
 				ContinuesHitTestAtCenter = false;
 				var hitPos = cursorNode.Position;// - Vector3.UnitZ * 0.01f;
 				positionIsSelected = true;
@@ -220,7 +232,7 @@ namespace ARKitXamarinDemo
 				navMesh = Scene.CreateComponent<DynamicNavigationMesh>();
 				Scene.CreateComponent<Navigable>();
 
-				navMesh.CellSize = 0.1f;
+				navMesh.CellSize = 0.01f;
 				navMesh.CellHeight = 0.05f;
 				navMesh.DrawOffMeshConnections = true;
 				navMesh.DrawNavAreas = true;

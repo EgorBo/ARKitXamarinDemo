@@ -152,6 +152,7 @@
     <BundleResource Include="Resources\UrhoData\Textures\Cursor.png" />
     <BundleResource Include="Resources\UrhoData\Materials\PlaneTileMat.xml" />
     <BundleResource Include="Resources\UrhoData\Textures\PlaneTile.png" />
+    <BundleResource Include="Resources\UrhoData\Shaders\GLSL\PlaneTile.glsl" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>
