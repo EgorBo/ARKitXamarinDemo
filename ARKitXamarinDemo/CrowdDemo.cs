@@ -2,6 +2,7 @@
 using System.Linq;
 using Urho;
 using Urho.Actions;
+using Urho.Audio;
 using Urho.Gui;
 using Urho.Navigation;
 
@@ -27,6 +28,9 @@ namespace ARKitXamarinDemo
 		const string DanceAnimation = @"Animations/Mutant_HipHop1.ani";
 		const string MutantModel = @"Models/Mutant.mdl";
 		const string MutantMaterial = @"Materials/mutant_M.xml";
+
+		SoundSource themeSoundSource;
+		SoundSource actionSoundSource;
 
 		[Preserve]
 		public CrowdDemo(ApplicationOptions opts) : base(opts) { }
@@ -64,6 +68,13 @@ namespace ARKitXamarinDemo
 			loadingLabel.SetColor(new Color(0.5f, 1f, 0f));
 			loadingLabel.SetFont(font: CoreAssets.Fonts.AnonymousPro, size: 42);
 			UI.Root.AddChild(loadingLabel);
+
+			actionSoundSource = Scene.CreateComponent<SoundSource>();
+
+			Node musicNode = Scene.CreateChild("Music");
+			themeSoundSource = musicNode.CreateComponent<SoundSource>();
+			themeSoundSource.SetSoundType(SoundType.Music.ToString());
+			themeSoundSource.Gain = 0.15f;
 		}
 
 		void OnUnhandledException(object sender, Urho.UnhandledExceptionEventArgs e)
@@ -109,6 +120,7 @@ namespace ARKitXamarinDemo
 
 		async void KillAll()
 		{
+			actionSoundSource.Play(ResourceCache.GetSound("Sounds/death.wav"));
 			foreach (var node in armyNode.Children.ToArray())
 			{
 				var anim = node.GetComponent<AnimationController>();
@@ -225,6 +237,11 @@ namespace ARKitXamarinDemo
 					model.Material.SetShaderParameter("MeshColor", Color.Transparent);
 				}
 
+
+				var music = ResourceCache.GetSound("Sounds/theme.ogg");
+				music.Looped = true;
+				themeSoundSource.Play(music);
+
 				ContinuesHitTestAtCenter = false;
 				var hitPos = cursorNode.Position;// - Vector3.UnitZ * 0.01f;
 				positionIsSelected = true;
@@ -269,7 +286,14 @@ namespace ARKitXamarinDemo
 				cursorNode.Position = hitPos.Value + Vector3.UnitY * 0.1f;
 				Vector3 pathPos = navMesh.FindNearestPoint(hitPos.Value, new Vector3(0.1f, 0.1f, 0.1f) * 5);
 				Scene.GetComponent<CrowdManager>().SetCrowdTarget(pathPos, Scene);
+
+
+				var sound = ResourceCache.GetSound($"Sounds/go{rand.Next(1, 6)}.wav");
+				actionSoundSource.Play(sound);
+				actionSoundSource.Gain = 0.75f;
 			}
 		}
+
+		Random rand = new Random();
 	}
 }

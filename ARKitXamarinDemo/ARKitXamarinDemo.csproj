@@ -153,6 +153,13 @@
     <BundleResource Include="Resources\UrhoData\Materials\PlaneTileMat.xml" />
     <BundleResource Include="Resources\UrhoData\Textures\PlaneTile.png" />
     <BundleResource Include="Resources\UrhoData\Shaders\GLSL\PlaneTile.glsl" />
+    <BundleResource Include="Resources\UrhoData\Sounds\death.wav" />
+    <BundleResource Include="Resources\UrhoData\Sounds\go1.wav" />
+    <BundleResource Include="Resources\UrhoData\Sounds\go2.wav" />
+    <BundleResource Include="Resources\UrhoData\Sounds\go3.wav" />
+    <BundleResource Include="Resources\UrhoData\Sounds\go4.wav" />
+    <BundleResource Include="Resources\UrhoData\Sounds\go5.wav" />
+    <BundleResource Include="Resources\UrhoData\Sounds\theme.ogg" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>
