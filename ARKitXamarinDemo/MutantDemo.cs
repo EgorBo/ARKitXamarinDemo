@@ -21,10 +21,15 @@ namespace ARKitXamarinDemo
 
 			// Mutant
 			mutantNode = Scene.CreateChild();
-			mutantNode.SetScale(0.3f);
-			mutantNode.Position = new Vector3(0, -0.5f, 1);
+			mutantNode.SetScale(0.2f);
+			mutantNode.Position = new Vector3(0, -0.2f, 0.75f);
+
+			var planeNode = mutantNode.CreateChild();
+			planeNode.Scale = new Vector3(10, 0.1f, 10);
+			var plane = planeNode.CreateComponent<Urho.SharpReality.TransparentPlaneWithShadows>();
 
 			var model = mutantNode.CreateComponent<AnimatedModel>();
+			model.CastShadows = true;
 			model.Model = ResourceCache.GetModel("Models/Mutant.mdl");
 			model.Material = ResourceCache.GetMaterial("Materials/mutant_M.xml");
 
@@ -45,7 +50,7 @@ namespace ARKitXamarinDemo
 		{
 			if (scaling)
 				return;
-			
+
 			var pos = HitTest(e.X / (float)Graphics.Width, e.Y / (float)Graphics.Height);
 			if (pos != null)
 				mutantNode.Position = pos.Value;
@@ -53,6 +58,7 @@ namespace ARKitXamarinDemo
 
 		protected override void OnUpdate(float timeStep)
 		{
+			// Scale up\down
 			if (Input.NumTouches == 2)
 			{
 				scaling = true;

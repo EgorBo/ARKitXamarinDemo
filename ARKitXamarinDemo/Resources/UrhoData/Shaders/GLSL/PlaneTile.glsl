@@ -11,6 +11,7 @@ varying vec4 vEyeVec;
 
 uniform vec4 cMeshColor;
 uniform float cMeshScale;
+uniform float cMeshAlpha;
 
 void VS()
 {
@@ -38,5 +39,5 @@ void VS()
 
 void PS()
 {
-    gl_FragColor = vec4(cMeshColor.rgb, texture2D(sDiffMap, vTexCoord * cMeshScale).a * cMeshColor.a);
+    gl_FragColor = vec4(cMeshColor.rgb, texture2D(sDiffMap, vTexCoord * cMeshScale).a * cMeshColor.a * cMeshAlpha);
 }

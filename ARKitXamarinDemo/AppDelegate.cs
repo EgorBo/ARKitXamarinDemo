@@ -2,9 +2,10 @@
 using System.Threading.Tasks;
 using UIKit;
 using ARKit;
-using System;
+using System.Linq;
 using Urho;
 using AVFoundation;
+using MonoTouch.Dialog;
 
 namespace ARKitXamarinDemo
 {
@@ -17,23 +18,26 @@ namespace ARKitXamarinDemo
 
 		public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
 		{
-			LaunchUrho();
+			Window = new UIWindow(UIScreen.MainScreen.Bounds);
+
+			var rootElement = new RootElement("UrhoSharp");
+			Window.RootViewController = new DialogViewController(rootElement);
+			var section = new Section("ARKit samples", "UrhoSharp");
+			rootElement.Add(section);
+			section.Add(new StringElement("Mutant demo", () => Run<MutantDemo>()));
+			section.Add(new StringElement("Crowd demo", () => Run<CrowdDemo>()));
+			//section.Add(new StringElement("Ruler demo", () => Run<RulerDemo>()));
+
+			Window.MakeKeyAndVisible();
 			return true;
 		}
 
-		// 
-		// Launching urho starts the task once control has returned to the OS at startup
-		// hence the await here.
-		//
-		async void LaunchUrho()
+        static void Run<T>() where T : ArkitApp
 		{
-			await Task.Yield();
-
-			var app = new CrowdDemo(new ApplicationOptions() { 
-				ResourcePaths = new string[] { "UrhoData" },
+			Urho.Application.CreateInstance<T>(new ApplicationOptions {
+				ResourcePaths = new[] { "UrhoData" },
 				Orientation = ApplicationOptions.OrientationType.Landscape
-			});
-			app.Run();
+			}).Run();
 		}
 	}
 }

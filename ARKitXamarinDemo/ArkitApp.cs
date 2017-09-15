@@ -12,6 +12,8 @@ using UIKit;
 using System.Diagnostics;
 using Urho.Gui;
 using Urho.Navigation;
+using Urho.Physics;
+using System.Collections.Generic;
 
 namespace ARKitXamarinDemo
 {
@@ -62,6 +64,11 @@ namespace ARKitXamarinDemo
 			Octree = Scene.CreateComponent<Octree>();
 			Zone = Scene.CreateComponent<Zone>();
 			Zone.AmbientColor = Color.White * 0.2f;
+			Scene.CreateComponent<PhysicsWorld>();
+
+			// Camera
+			CameraNode = Scene.CreateChild(name: "Camera");
+			Camera = CameraNode.CreateComponent<Camera>();
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
@@ -70,13 +77,9 @@ namespace ARKitXamarinDemo
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
 			Light.Brightness = 1.5f;
-			Light.ShadowResolution = 4;
-			Light.ShadowIntensity = 0.8f;
-			Renderer.ShadowMapSize *= 2;
-
-			// Camera
-			CameraNode = Scene.CreateChild(name: "Camera");
-			Camera = CameraNode.CreateComponent<Camera>();
+			Light.ShadowResolution = 8;
+			Light.ShadowIntensity = 0.5f;
+			Renderer.ShadowMapSize *= 8;
 
 			// Viewport
 			Viewport = new Viewport(Context, Scene, Camera, null);
@@ -96,19 +99,20 @@ namespace ARKitXamarinDemo
 			CreateArScene();
 
 			arSessionDelegate = new UrhoARSessionDelegate(this);
-			ARSession = new ARSession() { Delegate = arSessionDelegate };
+			ARSession = new ARSession { Delegate = arSessionDelegate };
 			var config = new ARWorldTrackingConfiguration();
+			//config.WorldAlignment = ARWorldAlignment.GravityAndHeading;
 			config.PlaneDetection = ARPlaneDetection.Horizontal;
 			ARSession.Run(config, ARSessionRunOptions.RemoveExistingAnchors);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		unsafe protected void ApplyTransform(Node node, OpenTK.Matrix4 matrix)
+		unsafe protected void ApplyTransform(Node node, OpenTK.NMatrix4 matrix)
 		{
 			Matrix4 urhoTransform = *(Matrix4*)(void*)&matrix;
 			var rotation = urhoTransform.Rotation;
 			rotation.Z *= -1;
-			var pos = matrix.Row3;
+			var pos = urhoTransform.Row3;
 			node.SetWorldPosition(new Vector3(pos.X, pos.Y, -pos.Z));
 			node.Rotation = rotation;
 		}
@@ -120,11 +124,9 @@ namespace ARKitXamarinDemo
 			var prj = arcamera.GetProjectionMatrix(UIInterfaceOrientation.LandscapeRight, new CoreGraphics.CGSize(Graphics.Width, Graphics.Height), 0.01f, 30f);
 
 			//Urho accepts projection matrix in DirectX format (negative row3 + transpose)
-			var urhoProjection = new Matrix4(
-				 prj.M11, prj.M21, -prj.M31, prj.M41,
-				 prj.M12, prj.M22, -prj.M32, prj.M42,
-				 prj.M13, prj.M23, -prj.M33, prj.M43,
-				 prj.M14, prj.M24, -prj.M34, prj.M44);
+			var urhoProjection = *(Matrix4*)(void*)&prj;
+			urhoProjection.Row2 *= -1;
+			urhoProjection.Transpose();
 
 			Camera.SetProjection(urhoProjection);
 			ApplyTransform(CameraNode, transform);
@@ -165,7 +167,6 @@ namespace ARKitXamarinDemo
 				float screenAspect = (float)nativeBounds.Size.Height / (float)nativeBounds.Size.Width;
 
 				cmd->SetShaderParameter("CameraScale", screenAspect / imageAspect);
-
 
 				//rp.Append(CoreAssets.PostProcess.FXAA2);
 				Viewport.RenderPath = rp;
@@ -226,7 +227,7 @@ namespace ARKitXamarinDemo
 
 			if (result != null && result.Distance > 0.2f)
 			{
-				var row = result.WorldTransform.Row3;
+				var row = result.WorldTransform.Column3;
 				return new Vector3(row.X, row.Y, -row.Z);
 			}
 			return null;
@@ -268,10 +269,9 @@ namespace ARKitXamarinDemo
 
 		void UpdateAnchor(Node node, ARAnchor anchor)
 		{
-			//return;// waits fix for https://bugzilla.xamarin.com/show_bug.cgi?id=58648
-
 			if (anchor is ARPlaneAnchor planeAnchor)
 			{
+				Material tileMaterial = null;
 				Node planeNode = null;
 				if (node == null)
 				{
@@ -282,7 +282,7 @@ namespace ARKitXamarinDemo
 					planeNode.Position = new Vector3();
 					plane.Model = CoreAssets.Models.Plane;
 
-					var tileMaterial = new Material();
+					tileMaterial = new Material();
 					tileMaterial.SetTexture(TextureUnit.Diffuse, ResourceCache.GetTexture2D("Textures/PlaneTile.png"));
 					var tech = new Technique();
 					var pass = tech.CreatePass("alpha");
@@ -292,17 +292,32 @@ namespace ARKitXamarinDemo
 					pass.VertexShader = "PlaneTile";
 					tileMaterial.SetTechnique(0, tech);
 					tileMaterial.SetShaderParameter("MeshColor", new Color(Randoms.Next(), 1, Randoms.Next()));
+					tileMaterial.SetShaderParameter("MeshAlpha", 0.8f); // set 0.0f if you want to hide them
 					tileMaterial.SetShaderParameter("MeshScale", 32.0f);
+
+					var planeRb = planeNode.CreateComponent<RigidBody>();
+					planeRb.Friction = 1.5f;
+					CollisionShape shape = planeNode.CreateComponent<CollisionShape>();
+					shape.SetBox(Vector3.One, Vector3.Zero, Quaternion.Identity);
 
 					plane.Material = tileMaterial;
 				}
 				else
+				{
 					planeNode = node.GetChild("SubPlane");
+					tileMaterial = planeNode.GetComponent<StaticModel>().Material;
+				}
 
 				ApplyTransform(node, planeAnchor.Transform);
 
 				planeNode.Scale = new Vector3(planeAnchor.Extent.X, 0.1f, planeAnchor.Extent.Z);
 				planeNode.Position = new Vector3(planeAnchor.Center.X, planeAnchor.Center.Y, -planeAnchor.Center.Z);
+
+				//var animation = new ValueAnimation();
+				//animation.SetKeyFrame(0.0f, 0.3f);
+				//animation.SetKeyFrame(0.5f, 0.0f);
+				//tileMaterial.SetShaderParameterAnimation("MeshAlpha", animation, WrapMode.Once, 1.0f);
+
 				Debug.WriteLine($"ARPlaneAnchor  Extent({planeAnchor.Extent}), Center({planeAnchor.Center}), Position({planeAnchor.Transform.Row3}");
 			}
 		}
@@ -333,14 +348,14 @@ namespace ARKitXamarinDemo
 			Console.WriteLine("DidFail");
 		}
 
-		public override void SessionWasInterrupted(ARSession session)
+		public override void WasInterrupted(ARSession session)
 		{
-			Console.WriteLine("SessionWasInterrupted");
+			base.WasInterrupted(session);
 		}
 
-		public override void SessionInterruptionEnded(ARSession session)
+		public override void InterruptionEnded(ARSession session)
 		{
-			Console.WriteLine("SessionInterruptionEnded");
+			base.InterruptionEnded(session);
 		}
 
 		public override void DidAddAnchors(ARSession session, ARAnchor[] anchors)

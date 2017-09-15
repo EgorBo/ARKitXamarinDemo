@@ -85,10 +85,13 @@ namespace ARKitXamarinDemo
 
 		void SubscribeToEvents()
 		{
-			Engine.PostRenderUpdate += e => {
-				//Scene.GetComponent<DynamicNavigationMesh>().DrawDebugGeometry(true);
-				//crowdManager.DrawDebugGeometry(true);
-			};
+			//debug:
+			if (false) {
+				Engine.PostRenderUpdate += e => {
+					Scene.GetComponent<DynamicNavigationMesh>().DrawDebugGeometry(true);
+					crowdManager.DrawDebugGeometry(true);
+				};
+			}
 
 			crowdManager.CrowdAgentReposition += args => {
 				Node node = args.Node;
@@ -204,7 +207,7 @@ namespace ARKitXamarinDemo
 			if (LastHitTest != null)
 			{
 				if (detectingFirstPlane)
-					loadingLabel.Value = "Look around to create a navigation mesh\nTap anywhere when you finish.";
+					loadingLabel.Value = "Look around to create a navigation mesh\nTap anywhere when you finish.\nTry to create the mesh as big as possible.";
 				detectingFirstPlane = false;
 				surfaceIsValid = true;
 				cursorNode.Position = LastHitTest.Value;

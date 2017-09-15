@@ -2,10 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleName</key>
-	<string>ARKitXamarinDemo</string>
-	<key>CFBundleIdentifier</key>
-	<string>foo.kkk</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
@@ -37,5 +33,9 @@
 	<true/>
 	<key>UIRequiresFullScreen</key>
 	<true/>
+	<key>CFBundleIdentifier</key>
+	<string>urho.demo</string>
+	<key>CFBundleName</key>
+	<string>UrhoSharp ARKit</string>
 </dict>
 </plist>
