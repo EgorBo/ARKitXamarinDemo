@@ -74,7 +74,7 @@ namespace ARKitXamarinDemo
 			Node musicNode = Scene.CreateChild("Music");
 			themeSoundSource = musicNode.CreateComponent<SoundSource>();
 			themeSoundSource.SetSoundType(SoundType.Music.ToString());
-			themeSoundSource.Gain = 0.15f;
+			themeSoundSource.Gain = 0.1f;
 		}
 
 		void OnUnhandledException(object sender, Urho.UnhandledExceptionEventArgs e)
@@ -293,7 +293,7 @@ namespace ARKitXamarinDemo
 
 				var sound = ResourceCache.GetSound($"Sounds/go{rand.Next(1, 6)}.wav");
 				actionSoundSource.Play(sound);
-				actionSoundSource.Gain = 0.75f;
+				actionSoundSource.Gain = 0.4f;
 			}
 		}
 

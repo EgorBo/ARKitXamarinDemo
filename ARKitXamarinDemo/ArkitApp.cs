@@ -63,7 +63,7 @@ namespace ARKitXamarinDemo
 			Scene = new Scene(Context);
 			Octree = Scene.CreateComponent<Octree>();
 			Zone = Scene.CreateComponent<Zone>();
-			Zone.AmbientColor = Color.White * 0.2f;
+			Zone.AmbientColor = Color.White * 0.15f;
 			Scene.CreateComponent<PhysicsWorld>();
 
 			// Camera
@@ -72,14 +72,14 @@ namespace ARKitXamarinDemo
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
-			LightNode.SetDirection(new Vector3(0.8f, -1.0f, 0f));
+			LightNode.SetDirection(new Vector3(0.75f, -1.0f, 0f));
 			Light = LightNode.CreateComponent<Light>();
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
 			Light.Brightness = 1.5f;
-			Light.ShadowResolution = 8;
-			Light.ShadowIntensity = 0.5f;
-			Renderer.ShadowMapSize *= 8;
+			Light.ShadowResolution = 4;
+			Light.ShadowIntensity = 0.75f;
+			Renderer.ShadowMapSize *= 4;
 
 			// Viewport
 			Viewport = new Viewport(Context, Scene, Camera, null);
@@ -88,7 +88,7 @@ namespace ARKitXamarinDemo
 
 			DebugHud = new MonoDebugHud(this);
 			DebugHud.FpsOnly = true;
-			DebugHud.Show(Color.Black, 45);
+			DebugHud.Show(Color.Black, 40);
 
 			AnchorsNode = Scene.CreateChild();
 			FeaturePointsCloudeNode = Scene.CreateChild();
@@ -186,7 +186,6 @@ namespace ARKitXamarinDemo
 			// https://developer.apple.com/documentation/arkit/displaying_an_ar_experience_with_metal
 			var ambientIntensity = (float)frame.LightEstimate.AmbientIntensity / 1000f;
 			//Light.Brightness = 0.5f + ambientIntensity / 2;
-			DebugHud.AdditionalText += "\nAmb: " + ambientIntensity.ToString("F1");
 
 			//use outside of InvokeOnMain?
 			if (yuvTexturesInited)
@@ -292,7 +291,7 @@ namespace ARKitXamarinDemo
 					pass.VertexShader = "PlaneTile";
 					tileMaterial.SetTechnique(0, tech);
 					tileMaterial.SetShaderParameter("MeshColor", new Color(Randoms.Next(), 1, Randoms.Next()));
-					tileMaterial.SetShaderParameter("MeshAlpha", 0.8f); // set 0.0f if you want to hide them
+					tileMaterial.SetShaderParameter("MeshAlpha", 0.75f); // set 0.0f if you want to hide them
 					tileMaterial.SetShaderParameter("MeshScale", 32.0f);
 
 					var planeRb = planeNode.CreateComponent<RigidBody>();

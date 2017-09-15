@@ -22,7 +22,7 @@ namespace ARKitXamarinDemo
 			// Mutant
 			mutantNode = Scene.CreateChild();
 			mutantNode.SetScale(0.2f);
-			mutantNode.Position = new Vector3(0, -0.2f, 0.75f);
+			mutantNode.Position = new Vector3(0, -0.5f, 0.75f);
 
 			var planeNode = mutantNode.CreateChild();
 			planeNode.Scale = new Vector3(10, 0.1f, 10);
