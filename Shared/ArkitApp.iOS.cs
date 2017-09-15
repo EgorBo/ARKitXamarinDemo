@@ -1,4 +1,4 @@
-﻿#if iOS
+﻿#if __IOS__
 // 
 // ArkitApp: provides a Urho.Application subclass that blends Urho with
 // ARKit.   

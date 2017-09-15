@@ -3,6 +3,7 @@
 // ARKit.   
 //
 
+using System.Diagnostics;
 using Urho;
 using Urho.Physics;
 
@@ -102,8 +103,16 @@ namespace ARKitXamarinDemo
 
 		protected override void Start()
 		{
+			UnhandledException += OnUnhandledException; 
 			CreateArScene();
 			StartSession();
+		}
+
+		void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+		{
+			System.Console.WriteLine(e.Exception);
+			if (Debugger.IsAttached)
+				Debugger.Break();
 		}
 
 		partial void StartSession();

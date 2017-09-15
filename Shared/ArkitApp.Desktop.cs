@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !__IOS__
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +23,8 @@ namespace ARKitXamarinDemo
 			var node = CreatePlaneNode("Plane1");
 			node.Position = new Vector3(0, -1, 0);
 			node.Scale = new Vector3(10, 1, 10);
+
+			Viewport.RenderPath.Append(CoreAssets.PostProcess.FXAA2);
 		}
 
 		protected override void OnUpdate(float timeStep)
@@ -90,3 +93,4 @@ namespace ARKitXamarinDemo
 		}
 	}
 }
+#endif

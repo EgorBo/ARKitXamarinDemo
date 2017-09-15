@@ -55,10 +55,10 @@
     <None Include="..\UrhoAssets_README.txt">
       <Link>UrhoAssets\UrhoAssets_README.txt</Link>
     </None>
-    <Content Include="..\UrhoAssets\**\*.*">
+    <None Include="..\UrhoAssets\**\*.*">
       <Link>UrhoAssets\%(RecursiveDir)\%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
