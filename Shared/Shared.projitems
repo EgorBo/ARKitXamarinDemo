@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>bc56690b-c19c-420b-b594-1ef4a7ef854d</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Shared</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)ArkitApp.Desktop.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ArkitApp.iOS.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ArkitApp.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CrowdDemo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MutantDemo.cs" />
+  </ItemGroup>
+</Project>
