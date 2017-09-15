@@ -7,10 +7,10 @@
 
 ## Prerequisites
  * iPhone 6S or later
- * iOS 11 beta 5 or later
- * Xcode 9 beta 5 or later
- * [Xamarin.iOS 10.99](https://jenkins.mono-project.com/view/Xamarin.MaciOS/job/xamarin-macios-builds-xcode9/) or later
- * In Xamarin Studio change "Apple SDK" path to Xcode 9 beta
+ * iOS 11 release 
+ * Xcode 9 GM
+ * [Xamarin.iOS 10.99.4.87](https://jenkins.mono-project.com/view/Xamarin.MaciOS/job/xamarin-macios-builds-xcode9/) or later
+ * In Xamarin Studio change "Apple SDK" path to Xcode 9 GM
 
 
 ## Video (click to play):
