@@ -32,4 +32,11 @@ void PS()
 	vec4 ycbcr = vec4(texture2D(sDiffMap, vec2(vTexCoord.x + 0.05, vTexCoord.y)).r,
 					  texture2D(sNormalMap, vTexCoord).ra, 1.0);
 	gl_FragColor = ycbcrToRGBTransform * ycbcr;
+
+    // some ugly fade effect :-)
+    if (vScreenPos.y < 0.25)
+    {
+        float v = (vScreenPos.y + 0.02) * 10.0;
+        gl_FragColor *= clamp(v, 0.0, 1.0);
+    }
 }

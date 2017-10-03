@@ -78,7 +78,7 @@ namespace ARKitXamarinDemo
 			Light.CastShadows = true;
 			Light.Brightness = 1.5f;
 			Light.ShadowResolution = 4;
-			Light.ShadowIntensity = 0.75f;
+			Light.ShadowIntensity = 0.5f;
 			Renderer.ShadowMapSize *= 4;
 
 			// Viewport
@@ -88,7 +88,7 @@ namespace ARKitXamarinDemo
 
 			DebugHud = new MonoDebugHud(this);
 			DebugHud.FpsOnly = true;
-			DebugHud.Show(Color.Black, 40);
+			//DebugHud.Show(Color.Black, 40);
 
 			AnchorsNode = Scene.CreateChild();
 			FeaturePointsCloudeNode = Scene.CreateChild();
@@ -290,9 +290,9 @@ namespace ARKitXamarinDemo
 					pass.PixelShader = "PlaneTile";
 					pass.VertexShader = "PlaneTile";
 					tileMaterial.SetTechnique(0, tech);
-					tileMaterial.SetShaderParameter("MeshColor", new Color(Randoms.Next(), 1, Randoms.Next()));
-					tileMaterial.SetShaderParameter("MeshAlpha", 0.75f); // set 0.0f if you want to hide them
-					tileMaterial.SetShaderParameter("MeshScale", 32.0f);
+					tileMaterial.SetShaderParameter("MeshColor", new Color(Randoms.Next(), 0.8f, Randoms.Next()));
+					tileMaterial.SetShaderParameter("MeshAlpha", 0.55f); // set 0.0f if you want to hide them
+					tileMaterial.SetShaderParameter("MeshScale", 15.0f);
 
 					var planeRb = planeNode.CreateComponent<RigidBody>();
 					planeRb.Friction = 1.5f;
@@ -339,7 +339,10 @@ namespace ARKitXamarinDemo
 		public override void DidUpdateFrame(ARSession session, ARFrame frame)
 		{
 			if (arkitApp.TryGetTarget(out var ap))
-				Urho.Application.InvokeOnMain(() => ap.ProcessARFrame(session, frame));
+			{
+				ap.ProcessARFrame(session, frame);
+				ap.Engine.RunFrame();
+			}
 		}
 
 		public override void DidFail(ARSession session, Foundation.NSError error)

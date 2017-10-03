@@ -91,10 +91,10 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="Xamarin.iOS" />
-    <Reference Include="Urho">
-      <HintPath>..\packages\UrhoSharp.1.5.20\lib\Xamarin.iOS10\Urho.dll</HintPath>
-    </Reference>
     <Reference Include="MonoTouch.Dialog-1" />
+    <Reference Include="Urho">
+      <HintPath>..\packages\UrhoSharp.1.5.22\lib\Xamarin.iOS10\Urho.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\Contents.json" />
@@ -109,7 +109,7 @@
     <Folder Include="Resources\UrhoData\Materials\" />
     <Folder Include="Resources\UrhoData\Models\" />
     <Folder Include="Resources\UrhoData\Textures\" />
-    <Folder Include="Resources\UrhoData\Techniques\" />
+    <Folder Include="Resources\Icons\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -120,49 +120,33 @@
     <Compile Include="ArkitApp.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
-    <Compile Include="MutantDemo.cs" />
-    <Compile Include="CrowdDemo.cs" />
-    <Compile Include="RulerDemo.cs" />
+    <Compile Include="UrhoApp.cs" />
+    <Compile Include="HologramCell.cs" />
+    <Compile Include="Hologram.cs" />
+    <Compile Include="HologramCollectionDelegate.cs" />
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\UrhoData\ARRenderPath.xml" />
     <BundleResource Include="Resources\UrhoData\Shaders\GLSL\ARCopyFramebuffer.glsl" />
     <BundleResource Include="Resources\UrhoData\License.txt" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Block_LY.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Death.ani" />
     <BundleResource Include="Resources\UrhoData\Animations\Mutant_HipHop1.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_HitHead_LY.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Idle0.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Idle1.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Jump.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Jump1.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_JumpAttack.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_JumpAttack_RM.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_JumpStop.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Kick.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Punch.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Run.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Swipe.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Throw_LY.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Walk.ani" />
-    <BundleResource Include="Resources\UrhoData\Animations\Mutant_Wave_LY.ani" />
     <BundleResource Include="Resources\UrhoData\Materials\mutant_M.xml" />
     <BundleResource Include="Resources\UrhoData\Models\Mutant.mdl" />
     <BundleResource Include="Resources\UrhoData\Textures\Mutant_diffuse.jpg" />
     <BundleResource Include="Resources\UrhoData\Textures\Mutant_normal.jpg" />
-    <BundleResource Include="Resources\UrhoData\Techniques\DiffOutline.xml" />
-    <BundleResource Include="Resources\UrhoData\Shaders\GLSL\Outline.glsl" />
-    <BundleResource Include="Resources\UrhoData\Textures\Cursor.png" />
     <BundleResource Include="Resources\UrhoData\Materials\PlaneTileMat.xml" />
     <BundleResource Include="Resources\UrhoData\Textures\PlaneTile.png" />
     <BundleResource Include="Resources\UrhoData\Shaders\GLSL\PlaneTile.glsl" />
-    <BundleResource Include="Resources\UrhoData\Sounds\death.wav" />
-    <BundleResource Include="Resources\UrhoData\Sounds\go1.wav" />
-    <BundleResource Include="Resources\UrhoData\Sounds\go2.wav" />
-    <BundleResource Include="Resources\UrhoData\Sounds\go3.wav" />
-    <BundleResource Include="Resources\UrhoData\Sounds\go4.wav" />
-    <BundleResource Include="Resources\UrhoData\Sounds\go5.wav" />
-    <BundleResource Include="Resources\UrhoData\Sounds\theme.ogg" />
+    <BundleResource Include="Resources\Icons\0.png" />
+    <BundleResource Include="Resources\Icons\1.png" />
+    <BundleResource Include="Resources\Icons\2.png" />
+    <BundleResource Include="Resources\Icons\3.png" />
+    <BundleResource Include="Resources\Icons\todo.png" />
+    <BundleResource Include="Resources\UrhoData\Textures\Moon.jpg" />
+    <BundleResource Include="Resources\UrhoData\Textures\Earth.jpg" />
+    <BundleResource Include="Resources\UrhoData\Textures\Mushroom.dds" />
+    <BundleResource Include="Resources\UrhoData\Materials\MushroomWind.xml" />
+    <BundleResource Include="Resources\UrhoData\Models\Mushroom.mdl" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>

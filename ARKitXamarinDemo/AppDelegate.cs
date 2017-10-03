@@ -1,43 +1,69 @@
 ﻿using Foundation;
-using System.Threading.Tasks;
 using UIKit;
-using ARKit;
-using System.Linq;
 using Urho;
-using AVFoundation;
-using MonoTouch.Dialog;
+using System.Collections.Generic;
+using CoreGraphics;
+using System;
+using Urho.iOS;
 
 namespace ARKitXamarinDemo
 {
-	// The UIApplicationDelegate for the application. This class is responsible for launching the
-	// User Interface of the application, as well as listening (and optionally responding) to application events from iOS.
 	[Register("AppDelegate")]
-	public class AppDelegate : UIApplicationDelegate
+	public class AppDelegate : UIApplicationDelegate, IUICollectionViewDataSource, IUICollectionViewDelegate
 	{
-		public override UIWindow Window { get; set; }
+		static NSString holoCellId = new NSString(nameof(HologramCell));
+		UIWindow window;
+		List<Hologram> availableHolograms;
 
-		public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
+		public override bool FinishedLaunching(UIApplication app, NSDictionary options)
 		{
-			Window = new UIWindow(UIScreen.MainScreen.Bounds);
+			var screenBounds = UIScreen.MainScreen.Bounds;
+			window = new UIWindow(screenBounds);
 
-			var rootElement = new RootElement("UrhoSharp");
-			Window.RootViewController = new DialogViewController(rootElement);
-			var section = new Section("ARKit samples", "UrhoSharp");
-			rootElement.Add(section);
-			section.Add(new StringElement("Mutant demo", () => Run<MutantDemo>()));
-			section.Add(new StringElement("Crowd demo", () => Run<CrowdDemo>()));
-			//section.Add(new StringElement("Ruler demo", () => Run<RulerDemo>()));
+			int iconSize = (int)(screenBounds.Height / 5f);
+			var flowLayout = new UICollectionViewFlowLayout {
+				HeaderReferenceSize = new CGSize(50, 0),
+				ScrollDirection = UICollectionViewScrollDirection.Horizontal,
+				ItemSize = new CGSize(iconSize - 10, iconSize - 10),
+				MinimumLineSpacing = 12
+			};
 
-			Window.MakeKeyAndVisible();
+			availableHolograms = UrhoApp.GenerateHolograms();
+			
+			var collectionView = new UICollectionView (
+				new CGRect (0, screenBounds.Height - iconSize - 5,
+				           screenBounds.Width, iconSize), flowLayout);
+			
+			collectionView.RegisterClassForCell(typeof(HologramCell), holoCellId);
+			collectionView.DataSource = this;
+			collectionView.BackgroundColor = new UIColor(0, 0, 0, 0);
+			collectionView.Delegate = new HologramCollectionDelegate(availableHolograms);
+
+			var surface = new UrhoSurface(screenBounds);
+
+			window.RootViewController = new UIViewController();
+			window.RootViewController.View.AddSubview(surface);
+			window.RootViewController.View.AddSubview(collectionView);
+			window.MakeKeyAndVisible();
+
+			surface.Show<UrhoApp>(new ApplicationOptions("UrhoData") { 
+				DelayedStart = true
+			});
+
 			return true;
 		}
 
-        static void Run<T>() where T : ArkitApp
+		public UICollectionViewCell GetCell(UICollectionView collectionView, NSIndexPath indexPath)
 		{
-			Urho.Application.CreateInstance<T>(new ApplicationOptions {
-				ResourcePaths = new[] { "UrhoData" },
-				Orientation = ApplicationOptions.OrientationType.Landscape
-			}).Run();
+			var cell = (HologramCell)collectionView.DequeueReusableCell(holoCellId, indexPath);
+			var holo = availableHolograms[indexPath.Row];
+			cell.Image = UIImage.FromBundle(holo.Icon);
+			return cell;
+		}
+
+		public nint GetItemsCount(UICollectionView collectionView, nint section)
+		{
+			return availableHolograms.Count;
 		}
 	}
 }
