@@ -63,7 +63,7 @@ namespace ARKitXamarinDemo
 			Scene = new Scene(Context);
 			Octree = Scene.CreateComponent<Octree>();
 			Zone = Scene.CreateComponent<Zone>();
-			Zone.AmbientColor = Color.White * 0.15f;
+			Zone.AmbientColor = Color.White * 0.3f;
 			Scene.CreateComponent<PhysicsWorld>();
 
 			// Camera
@@ -72,11 +72,11 @@ namespace ARKitXamarinDemo
 
 			// Light
 			LightNode = Scene.CreateChild(name: "DirectionalLight");
-			LightNode.SetDirection(new Vector3(0.75f, -1.0f, 0f));
+			LightNode.SetDirection(new Vector3(0.75f, -1.0f, 1f));
 			Light = LightNode.CreateComponent<Light>();
 			Light.LightType = LightType.Directional;
 			Light.CastShadows = true;
-			Light.Brightness = 1.5f;
+			Light.Brightness = 1.1f;
 			Light.ShadowResolution = 4;
 			Light.ShadowIntensity = 0.5f;
 			Renderer.ShadowMapSize *= 4;
@@ -290,8 +290,8 @@ namespace ARKitXamarinDemo
 					pass.PixelShader = "PlaneTile";
 					pass.VertexShader = "PlaneTile";
 					tileMaterial.SetTechnique(0, tech);
-					tileMaterial.SetShaderParameter("MeshColor", new Color(Randoms.Next(), 0.8f, Randoms.Next()));
-					tileMaterial.SetShaderParameter("MeshAlpha", 0.55f); // set 0.0f if you want to hide them
+					tileMaterial.SetShaderParameter("MeshColor", Color.White);
+					tileMaterial.SetShaderParameter("MeshAlpha", 0.8f); // set 0.0f if you want to hide them
 					tileMaterial.SetShaderParameter("MeshScale", 15.0f);
 
 					var planeRb = planeNode.CreateComponent<RigidBody>();
@@ -312,10 +312,10 @@ namespace ARKitXamarinDemo
 				planeNode.Scale = new Vector3(planeAnchor.Extent.X, 0.1f, planeAnchor.Extent.Z);
 				planeNode.Position = new Vector3(planeAnchor.Center.X, planeAnchor.Center.Y, -planeAnchor.Center.Z);
 
-				//var animation = new ValueAnimation();
-				//animation.SetKeyFrame(0.0f, 0.3f);
-				//animation.SetKeyFrame(0.5f, 0.0f);
-				//tileMaterial.SetShaderParameterAnimation("MeshAlpha", animation, WrapMode.Once, 1.0f);
+				var animation = new ValueAnimation();
+				animation.SetKeyFrame(0.0f, 0.8f);
+				animation.SetKeyFrame(0.5f, 0.0f);
+				tileMaterial.SetShaderParameterAnimation("MeshAlpha", animation, WrapMode.Once, 1.0f);
 
 				Debug.WriteLine($"ARPlaneAnchor  Extent({planeAnchor.Extent}), Center({planeAnchor.Center}), Position({planeAnchor.Transform.Row3}");
 			}
@@ -352,12 +352,12 @@ namespace ARKitXamarinDemo
 
 		public override void WasInterrupted(ARSession session)
 		{
-			base.WasInterrupted(session);
+			Console.WriteLine("WasInterrupted");
 		}
 
 		public override void InterruptionEnded(ARSession session)
 		{
-			base.InterruptionEnded(session);
+			Console.WriteLine("InterruptionEnded");
 		}
 
 		public override void DidAddAnchors(ARSession session, ARAnchor[] anchors)

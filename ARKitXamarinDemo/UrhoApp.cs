@@ -13,6 +13,7 @@ namespace ARKitXamarinDemo
 
 		Node rootNode;
 		bool scaling;
+		float hitTestYmargin = 0;
 
 		protected override unsafe void Start()
 		{
@@ -27,10 +28,15 @@ namespace ARKitXamarinDemo
 
 		internal static List<Hologram> GenerateHolograms()
 		{
+			var labels = new[] { "Mutant", "Mushroom", "Earth", "Moon" };
+
 			var result = new List<Hologram>();
-			for (int i = 0; i < 12; i++) {
-				string icon = "Icons/" + i;
-				result.Add(new Hologram(i > 3 ? "Icons/todo" : icon, i, index => ((UrhoApp)Current).OnHologramSelected(index)));
+			for (int i = 0; i < 12; i++)
+			{
+				if (i >= labels.Length)
+					result.Add(new Hologram("", "Icons/todo", i, index => ((UrhoApp)Current).OnHologramSelected(index)));
+				else
+					result.Add(new Hologram(labels[i], "Icons/" + i, i, index => ((UrhoApp)Current).OnHologramSelected(index)));
 			}
 
 			return result;
@@ -41,9 +47,9 @@ namespace ARKitXamarinDemo
 			rootNode?.Remove();
 			rootNode = Scene.CreateChild();
 			rootNode.SetScale(0.4f);
-			var direction = CameraNode.Direction;
-			direction.Normalize();
-			rootNode.Position = new Vector3(direction.X, -0.5f, direction.Z) * 1.5f;
+			var direction = CameraNode.Rotation * new Vector3(0f, 0f, 1.2f);
+			rootNode.Position = CameraNode.WorldPosition + new Vector3(direction.X, -0.5f, direction.Z);
+			hitTestYmargin = 0;
 
 			if (index > 3)
 				return;
@@ -51,10 +57,6 @@ namespace ARKitXamarinDemo
 			// Mutant
 			if (index == 0)
 			{
-				var planeNode = rootNode.CreateChild();
-				planeNode.Scale = new Vector3(10, 0.01f, 10);
-				var plane = planeNode.CreateComponent<Urho.SharpReality.TransparentPlaneWithShadows>();
-
 				var model = rootNode.CreateComponent<AnimatedModel>();
 				model.CastShadows = true;
 				model.Model = ResourceCache.GetModel("Models/Mutant.mdl");
@@ -74,18 +76,20 @@ namespace ARKitXamarinDemo
 			// Earth
 			else if (index == 2)
 			{
+				hitTestYmargin = 0.5f;
 				var model = rootNode.CreateComponent<StaticModel>();
 				model.Model = CoreAssets.Models.Sphere;
-				model.Material = Material.FromImage("Textures/Earth.jpg");
-				rootNode.RunActionsAsync(new RepeatForever(new RotateBy(duration: 1f, deltaAngleX: 0, deltaAngleY: -15, deltaAngleZ: 0)));
+				model.Material = Material.FromImage("Textures/Earth.jpg", "Textures/Earth_NormalsMap.png");
+				rootNode.RunActionsAsync(new RepeatForever(new RotateBy(duration: 1f, deltaAngleX: 0, deltaAngleY: -25, deltaAngleZ: 0)));
 			}
 			// Moon
 			else if (index == 3)
 			{
+				hitTestYmargin = 0.5f;
 				var model = rootNode.CreateComponent<StaticModel>();
 				model.Model = CoreAssets.Models.Sphere;
 				model.Material = Material.FromImage("Textures/Moon.jpg");
-				rootNode.RunActionsAsync(new RepeatForever(new RotateBy(duration: 1f, deltaAngleX: 0, deltaAngleY: -15, deltaAngleZ: 0)));
+				rootNode.RunActionsAsync(new RepeatForever(new RotateBy(duration: 1f, deltaAngleX: 0, deltaAngleY: -25, deltaAngleZ: 0)));
 			}
 		}
 

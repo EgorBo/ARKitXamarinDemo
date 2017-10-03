@@ -147,6 +147,7 @@
     <BundleResource Include="Resources\UrhoData\Textures\Mushroom.dds" />
     <BundleResource Include="Resources\UrhoData\Materials\MushroomWind.xml" />
     <BundleResource Include="Resources\UrhoData\Models\Mushroom.mdl" />
+    <BundleResource Include="Resources\UrhoData\Textures\Earth_NormalsMap.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>

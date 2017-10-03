@@ -25,14 +25,14 @@ namespace ARKitXamarinDemo
 				HeaderReferenceSize = new CGSize(50, 0),
 				ScrollDirection = UICollectionViewScrollDirection.Horizontal,
 				ItemSize = new CGSize(iconSize - 10, iconSize - 10),
-				MinimumLineSpacing = 12
+				MinimumLineSpacing = 16
 			};
 
 			availableHolograms = UrhoApp.GenerateHolograms();
 			
 			var collectionView = new UICollectionView (
-				new CGRect (0, screenBounds.Height - iconSize - 5,
-				           screenBounds.Width, iconSize), flowLayout);
+				new CGRect (0, screenBounds.Height - iconSize - 20,
+				           screenBounds.Width, iconSize + 20), flowLayout);
 			
 			collectionView.RegisterClassForCell(typeof(HologramCell), holoCellId);
 			collectionView.DataSource = this;
@@ -58,6 +58,7 @@ namespace ARKitXamarinDemo
 			var cell = (HologramCell)collectionView.DequeueReusableCell(holoCellId, indexPath);
 			var holo = availableHolograms[indexPath.Row];
 			cell.Image = UIImage.FromBundle(holo.Icon);
+			cell.Text = holo.Label;
 			return cell;
 		}
 
